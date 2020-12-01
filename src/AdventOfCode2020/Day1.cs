@@ -80,52 +80,52 @@ namespace AdventOfCode2020
         {
             numbers.Sort();
 
-            var min = numbers[0];
-            var max = numbers[^1];
-
-            while (true)
+            while (numbers.Length >= 2)
             {
-                while (min + max > total)
+                var sum = numbers[0] + numbers[^1];
+                if (sum > total)
                 {
                     numbers = numbers.Slice(0, numbers.Length - 1);
-                    max = numbers[^1];
-                }
 
-                if (min + max < total)
+                }
+                else if (sum < total)
                 {
                     numbers = numbers.Slice(1);
-                    min = numbers[0];
                 }
                 else
                 {
-                    break;
+                    return (numbers[0], numbers[^1]);
                 }
             }
 
-            return (min, max);
+            return default;
         }
 
         private static (int, int, int) SumOfThreeNumbers(Span<int> numbers, int total)
         {
             numbers.Sort();
 
-            while (numbers.Length > 3)
+            while (numbers.Length >= 3)
             {
                 if (numbers[0] + numbers[1] + numbers[^1] > total)
                 {
                     numbers = numbers.Slice(0, numbers.Length - 1);
+                    continue;
                 }
-                else if (!numbers.Contains(total - numbers[^1] - numbers[0]))
+
+                var a = numbers[0];
+                var c = numbers[^1];
+                var b = total - a - c;
+
+                if (numbers.BinarySearch(b) > 0)
                 {
-                    numbers = numbers.Slice(1);
+                    return (a, b, c);
                 }
-                else
-                {
-                    break;
-                }
+
+                numbers = numbers.Slice(1);
             }
 
-            return (numbers[0], numbers[1], numbers[^1]);
+            return default;
         }
     }
 }
