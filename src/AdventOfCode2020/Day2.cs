@@ -12,7 +12,7 @@ namespace AdventOfCode2020
         {
             var lines = Example();
 
-            Assert.Equal(2, NumberOfValidPasswords(lines));
+            Assert.Equal(2, lines.Count(IsValidSledRentalPassword));
         }
 
         [Fact]
@@ -20,31 +20,50 @@ namespace AdventOfCode2020
         {
             var lines = await Input();
 
-            Assert.Equal(538, NumberOfValidPasswords(lines));
+            Assert.Equal(538, lines.Count(IsValidSledRentalPassword));
         }
 
-        private static int NumberOfValidPasswords(string[] lines)
+        [Fact]
+        public void Part_2_example()
         {
-            int valid = 0;
-            foreach (var line in lines)
-            {
-                var parts = line.Split(' ');
+            var lines = Example();
 
-                var range = parts[0].Split('-').Select(int.Parse).ToArray();
-                var letter = parts[1][0];
-                var password = parts[2];
-
-                var count = password.Count(x => x == letter);
-
-                if (count >= range[0] && count <= range[1])
-                {
-                    valid++;
-                }
-            }
-
-            return valid;
+            Assert.Equal(1, lines.Count(IsTobogganPassword));
         }
 
+        [Fact]
+        public async Task Part_2()
+        {
+            var lines = await Input();
+
+            Assert.Equal(489, lines.Count(IsTobogganPassword));
+        }
+
+        private static bool IsValidSledRentalPassword(string line)
+        {
+            var parts = line.Split(' ');
+
+            var range = parts[0].Split('-').Select(int.Parse).ToArray();
+            var letter = parts[1][0];
+            var password = parts[2];
+
+            var count = password.Count(x => x == letter);
+
+            return (count >= range[0] && count <= range[1]);
+        }
+
+        private static bool IsTobogganPassword(string line)
+        {
+            var parts = line.Split(' ');
+
+            var indexes = parts[0].Split('-').Select(int.Parse).ToArray();
+            var letter = parts[1][0];
+            var password = parts[2];
+
+            var matches = indexes.Count(i => password[i - 1] == letter);
+
+            return matches == 1;
+        }
 
         private static string[] Example() => new[]
         {
