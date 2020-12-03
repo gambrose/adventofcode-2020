@@ -5,7 +5,7 @@ using Xunit;
 
 namespace AdventOfCode2020
 {
-    public class Day2
+    public class Day02
     {
         [Fact]
         public void Part_1_example()
@@ -74,7 +74,7 @@ namespace AdventOfCode2020
 
         private static Task<string[]> Input()
         {
-            return File.ReadAllLinesAsync("Day2-input.txt");
+            return File.ReadAllLinesAsync("Day02.input.txt");
         }
     }
 }
