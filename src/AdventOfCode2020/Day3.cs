@@ -1,4 +1,3 @@
-using System;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -36,7 +35,22 @@ namespace AdventOfCode2020
         {
             var lines = Example();
 
-            throw new NotImplementedException();
+            var slopes = new[]
+            {
+                (1, 1),
+                (3, 1),
+                (5, 1),
+                (7, 1),
+                (1, 2)
+            };
+
+            var routes = slopes.Select(slope => Navigate(lines, slope));
+
+            var trees = routes.Select(route => route.Count(c => c == 'X'));
+
+            Assert.Equal(new[] { 2, 7, 3, 4, 2 }, trees);
+            
+            Assert.Equal(336, trees.Aggregate((acc, x) => acc * x));
         }
 
         [Fact]
@@ -44,7 +58,20 @@ namespace AdventOfCode2020
         {
             var lines = await Input();
 
-            throw new NotImplementedException();
+            var slopes = new[]
+            {
+                (1, 1),
+                (3, 1),
+                (5, 1),
+                (7, 1),
+                (1, 2)
+            };
+
+            var routes = slopes.Select(slope => Navigate(lines, slope));
+
+            var trees = routes.Select(route => route.LongCount(c => c == 'X'));
+            
+            Assert.Equal(3064612320, trees.Aggregate((acc, x) => acc * x));
         }
 
         private static string Navigate(string[] map, (int right, int down) vector)
