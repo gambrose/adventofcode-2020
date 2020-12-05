@@ -27,15 +27,26 @@ namespace AdventOfCode2020
         }
 
         [Fact]
-        public void Part_2_example()
-        {
-
-        }
-
-        [Fact]
         public void Part_2()
         {
+            var seats = new bool[128 * 8];
 
+            foreach (var boardingPass in Input)
+            {
+                seats[GetSeatId(GetRow(boardingPass), GetColumn(boardingPass))] = true;
+            }
+
+            var freeSeats = new List<int>();
+
+            for (int id = 1; id < seats.Length - 1; id++)
+            {
+                if (seats[id] == false && seats[id - 1] && seats[id + 1])
+                {
+                    freeSeats.Add(id);
+                }
+            }
+
+            Assert.Equal(new[] { 562 }, freeSeats);
         }
 
         [Fact]
