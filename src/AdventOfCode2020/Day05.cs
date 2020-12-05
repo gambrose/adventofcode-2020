@@ -36,62 +36,37 @@ namespace AdventOfCode2020
         [InlineData("FFFBBBFRRR", 14)]
         [InlineData("BBFFBBFRLL", 102)]
         [InlineData("BFFFBBFRRR", 70)]
-        public void Get_row_from_boarding_pass(string boardingPass, int row)
-        {
-            Assert.Equal(row, Row(boardingPass));
-        }
+        public void Get_row_from_boarding_pass(string boardingPass, int row) => Assert.Equal(row, Row(boardingPass));
 
         [Theory]
         [InlineData("FBFBBFFRLR", 5)]
         [InlineData("FFFBBBFRRR", 7)]
         [InlineData("BBFFBBFRLL", 4)]
         [InlineData("BFFFBBFRRR", 7)]
-        public void Get_column_from_boarding_pass(string boardingPass, int column)
-        {
-            Assert.Equal(column, Column(boardingPass));
-        }
+        public void Get_column_from_boarding_pass(string boardingPass, int column) => Assert.Equal(column, Column(boardingPass));
 
         [Theory]
         [InlineData("FBFBBFFRLR", 357)]
         [InlineData("FFFBBBFRRR", 119)]
         [InlineData("BBFFBBFRLL", 820)]
         [InlineData("BFFFBBFRRR", 567)]
-        public void Get_seat_ID_from_boarding_pass(string boardingPass, int seatId)
-        {
-            Assert.Equal(seatId, SeatId(boardingPass));
-        }
+        public void Get_seat_ID_from_boarding_pass(string boardingPass, int seatId) => Assert.Equal(seatId, SeatId(boardingPass));
 
-        private static int Row(string boardingPass)
-        {
-            var row = 0;
-            foreach (var c in boardingPass.AsSpan(0, 7))
+        private static int Row(string boardingPass) => boardingPass.AsSpan(0, 7)
+            .Aggregate(0, (acc, c) => (acc << 1) | c switch
             {
-                row = (row << 1) | c switch
-                {
-                    'F' => 0,
-                    'B' => 1,
-                    _ => throw new ArgumentException()
-                };
-            }
+                'F' => 0,
+                'B' => 1,
+                _ => throw new ArgumentException()
+            });
 
-            return row;
-        }
-
-        private static int Column(string boardingPass)
-        {
-            var column = 0;
-            foreach (var c in boardingPass.AsSpan(7, 3))
+        private static int Column(string boardingPass) => boardingPass.AsSpan(7, 3)
+            .Aggregate(0, (acc, c) => (acc << 1) | c switch
             {
-                column = (column << 1) | c switch
-                {
-                    'L' => 0,
-                    'R' => 1,
-                    _ => throw new ArgumentException()
-                };
-            }
-
-            return column;
-        }
+                'L' => 0,
+                'R' => 1,
+                _ => throw new ArgumentException()
+            });
 
         private static int SeatId(string boardingPass) => Row(boardingPass) * 8 + Column(boardingPass);
 
