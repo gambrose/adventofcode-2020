@@ -11,7 +11,7 @@ namespace AdventOfCode2020
         [Fact]
         public void Part_1()
         {
-            Assert.Equal(806, Input.Max(boardingPass => GetSeatId(GetRow(boardingPass), GetColumn(boardingPass))));
+            Assert.Equal(806, Input.Max(SeatId));
         }
 
         [Fact]
@@ -21,7 +21,7 @@ namespace AdventOfCode2020
 
             foreach (var boardingPass in Input)
             {
-                seats[GetSeatId(GetRow(boardingPass), GetColumn(boardingPass))] = true;
+                seats[SeatId(boardingPass)] = true;
             }
 
             var freeSeats = new List<int>();
@@ -42,9 +42,9 @@ namespace AdventOfCode2020
         [InlineData("FFFBBBFRRR", 14)]
         [InlineData("BBFFBBFRLL", 102)]
         [InlineData("BFFFBBFRRR", 70)]
-        public void Get_row(string boardingPass, int row)
+        public void Get_row_from_boarding_pass(string boardingPass, int row)
         {
-            Assert.Equal(row, GetRow(boardingPass));
+            Assert.Equal(row, Row(boardingPass));
         }
 
         [Theory]
@@ -52,22 +52,22 @@ namespace AdventOfCode2020
         [InlineData("FFFBBBFRRR", 7)]
         [InlineData("BBFFBBFRLL", 4)]
         [InlineData("BFFFBBFRRR", 7)]
-        public void Get_column(string boardingPass, int column)
+        public void Get_column_from_boarding_pass(string boardingPass, int column)
         {
-            Assert.Equal(column, GetColumn(boardingPass));
+            Assert.Equal(column, Column(boardingPass));
         }
 
         [Theory]
-        [InlineData(44, 5, 357)]
-        [InlineData(14, 7, 119)]
-        [InlineData(102, 4, 820)]
-        [InlineData(70, 7, 567)]
-        public void Get_seat_ID(int row, int column, int seatId)
+        [InlineData("FBFBBFFRLR", 357)]
+        [InlineData("FFFBBBFRRR", 119)]
+        [InlineData("BBFFBBFRLL", 820)]
+        [InlineData("BFFFBBFRRR", 567)]
+        public void Get_seat_ID_from_boarding_pass(string boardingPass, int seatId)
         {
-            Assert.Equal(seatId, GetSeatId(row, column));
+            Assert.Equal(seatId, SeatId(boardingPass));
         }
 
-        private static int GetRow(string boardingPass)
+        private static int Row(string boardingPass)
         {
             var row = 0;
             foreach (var c in boardingPass.AsSpan(0, 7))
@@ -83,7 +83,7 @@ namespace AdventOfCode2020
             return row;
         }
 
-        private static int GetColumn(string boardingPass)
+        private static int Column(string boardingPass)
         {
             var column = 0;
             foreach (var c in boardingPass.AsSpan(7, 3))
@@ -99,10 +99,7 @@ namespace AdventOfCode2020
             return column;
         }
 
-        private static int GetSeatId(int row, int column)
-        {
-            return (row * 8) + column;
-        }
+        private static int SeatId(string boardingPass) => Row(boardingPass) * 8 + Column(boardingPass);
 
         private static IReadOnlyList<string> Input { get; } = File.ReadAllLines("Day05.input.txt");
     }
