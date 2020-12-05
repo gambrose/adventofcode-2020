@@ -9,17 +9,6 @@ namespace AdventOfCode2020
 {
     public class Day05
     {
-        [Theory]
-        [InlineData("FFFBBBFRRR", 14, 7, 119)]
-        [InlineData("BBFFBBFRLL", 102, 4, 820)]
-        [InlineData("BFFFBBFRRR", 70, 7, 567)]
-        public void Part_1_example(string boardingPass, int row, int column, int seatId)
-        {
-            Assert.Equal(row, GetRow(boardingPass));
-            Assert.Equal(column, GetColumn(boardingPass));
-            Assert.Equal(seatId, GetSeatId(row, column));
-        }
-
         [Fact]
         public void Part_1()
         {
@@ -49,23 +38,34 @@ namespace AdventOfCode2020
             Assert.Equal(new[] { 562 }, freeSeats);
         }
 
-        [Fact]
-        public void Get_row()
+        [Theory]
+        [InlineData("FBFBBFFRLR", 44)]
+        [InlineData("FFFBBBFRRR", 14)]
+        [InlineData("BBFFBBFRLL", 102)]
+        [InlineData("BFFFBBFRRR", 70)]
+        public void Get_row(string boardingPass, int row)
         {
-            Assert.Equal(44, GetRow("FBFBBFFRLR"));
+            Assert.Equal(row, GetRow(boardingPass));
         }
 
-        [Fact]
-        public void Get_column()
+        [Theory]
+        [InlineData("FBFBBFFRLR", 5)]
+        [InlineData("FFFBBBFRRR", 7)]
+        [InlineData("BBFFBBFRLL", 4)]
+        [InlineData("BFFFBBFRRR", 7)]
+        public void Get_column(string boardingPass, int column)
         {
-            Assert.Equal(5, GetColumn("FBFBBFFRLR"));
+            Assert.Equal(column, GetColumn(boardingPass));
         }
 
-
-        [Fact]
-        public void Get_seat_ID()
+        [Theory]
+        [InlineData(44, 5, 357)]
+        [InlineData(14, 7, 119)]
+        [InlineData(102, 4, 820)]
+        [InlineData(70, 7, 567)]
+        public void Get_seat_ID(int row, int column, int seatId)
         {
-            Assert.Equal(357, GetSeatId(44, 5));
+            Assert.Equal(seatId, GetSeatId(row, column));
         }
 
         private static int GetRow(string boardingPass)
