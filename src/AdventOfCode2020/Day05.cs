@@ -17,24 +17,26 @@ namespace AdventOfCode2020
         [Fact]
         public void Part_2()
         {
-            var seats = new bool[128 * 8];
+            Span<bool> seats = stackalloc bool[128 * 8];
 
             foreach (var boardingPass in Input)
             {
                 seats[SeatId(boardingPass)] = true;
             }
 
-            var freeSeats = new List<int>();
+            var mySeat = 0;
 
-            for (int id = 1; id < seats.Length - 1; id++)
+            for (var id = 1; id < seats.Length - 1; id++)
             {
                 if (seats[id] == false && seats[id - 1] && seats[id + 1])
                 {
-                    freeSeats.Add(id);
+                    // Check that it is just the one free seat.
+                    Assert.Equal(0, mySeat);
+                    mySeat = id;
                 }
             }
 
-            Assert.Equal(new[] { 562 }, freeSeats);
+            Assert.Equal(562, mySeat);
         }
 
         [Theory]
