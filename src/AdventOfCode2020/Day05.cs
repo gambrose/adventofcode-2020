@@ -24,17 +24,9 @@ namespace AdventOfCode2020
                 seats[SeatId(boardingPass)] = true;
             }
 
-            var mySeat = 0;
+            Span<bool> pattern = stackalloc[] { true, false, true };
 
-            for (var id = 1; id < seats.Length - 1; id++)
-            {
-                if (seats[id] == false && seats[id - 1] && seats[id + 1])
-                {
-                    // Check that it is just the one free seat.
-                    Assert.Equal(0, mySeat);
-                    mySeat = id;
-                }
-            }
+            var mySeat = seats.IndexOf(pattern) + 1;
 
             Assert.Equal(562, mySeat);
         }
