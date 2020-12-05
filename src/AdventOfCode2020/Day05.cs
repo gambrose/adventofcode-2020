@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Xunit;
@@ -70,48 +69,39 @@ namespace AdventOfCode2020
 
         private static int GetRow(string boardingPass)
         {
-            return BinarySearch(boardingPass.AsSpan(0, 7), 'F', 'B');
+            var row = 0;
+            foreach (var c in boardingPass.AsSpan(0, 7))
+            {
+                row = (row << 1) | c switch
+                {
+                    'F' => 0,
+                    'B' => 1,
+                    _ => throw new ArgumentException()
+                };
+            }
+
+            return row;
         }
 
         private static int GetColumn(string boardingPass)
         {
-            return BinarySearch(boardingPass.AsSpan(7, 3), 'L', 'R');
+            var column = 0;
+            foreach (var c in boardingPass.AsSpan(7, 3))
+            {
+                column = (column << 1) | c switch
+                {
+                    'L' => 0,
+                    'R' => 1,
+                    _ => throw new ArgumentException()
+                };
+            }
+
+            return column;
         }
 
         private static int GetSeatId(int row, int column)
         {
             return (row * 8) + column;
-        }
-
-        private static int BinarySearch(ReadOnlySpan<char> search, char lower, char upper)
-        {
-            int min = 0;
-            int max = (1 << search.Length) - 1;
-
-            while (!search.IsEmpty)
-            {
-                var half = ((max - min) >> 1) + 1;
-
-                if (search[0] == lower)
-                {
-                    max -= half;
-
-                }
-                else if (search[0] == upper)
-                {
-                    min += half;
-                }
-                else
-                {
-                    throw new ArgumentException();
-                }
-
-                search = search.Slice(1);
-            }
-
-            Debug.Assert(min == max);
-
-            return min;
         }
 
         private static IReadOnlyList<string> Input { get; } = File.ReadAllLines("Day05.input.txt");
