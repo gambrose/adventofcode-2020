@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -88,31 +89,23 @@ namespace AdventOfCode2020
 
         private static readonly Regex KeyValuePattern = new Regex(@"(\S+):(\S+)", RegexOptions.Compiled);
 
-        private static IEnumerable<IDictionary<string, string>> ParsePassports(IReadOnlyList<string> input)
+        private static IEnumerable<IDictionary<string, string>> ParsePassports(ReadOnlyMemory<string> input)
         {
-            var passport = new Dictionary<string, string>();
-
-            foreach (var line in input)
+            foreach (var group in input.Split(string.Empty))
             {
-                if (line == string.Empty && passport.Count > 0)
-                {
-                    yield return passport;
+                var passport = new Dictionary<string, string>();
 
-                    passport = new Dictionary<string, string>();
-                    continue;
-                }
-
-                foreach (Match match in KeyValuePattern.Matches(line))
+                foreach (var line in group)
                 {
-                    if (match.TryCapture(out var key, out var value))
+                    foreach (Match match in KeyValuePattern.Matches(line))
                     {
-                        passport.Add(key, value);
+                        if (match.TryCapture(out var key, out var value))
+                        {
+                            passport.Add(key, value);
+                        }
                     }
                 }
-            }
 
-            if (passport.Count > 0)
-            {
                 yield return passport;
             }
         }
@@ -174,7 +167,7 @@ namespace AdventOfCode2020
             };
         }
 
-        private static IReadOnlyList<string> Example { get; } = new[]
+        private static ReadOnlyMemory<string> Example { get; } = new[]
         {
             "ecl:gry pid:860033327 eyr:2020 hcl:#fffffd",
             "byr:1937 iyr:2017 cid:147 hgt:183cm",
@@ -191,6 +184,6 @@ namespace AdventOfCode2020
             "iyr:2011 ecl:brn hgt:59in"
         };
 
-        private static IReadOnlyList<string> Input { get; } = File.ReadAllLines("Day04.input.txt");
+        private static ReadOnlyMemory<string> Input { get; } = File.ReadAllLines("Day04.input.txt");
     }
 }
