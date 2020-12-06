@@ -11,87 +11,60 @@ namespace AdventOfCode2020
         [Fact]
         public void Part_1_example()
         {
-            Assert.Equal(11, ParsePassports(Example).Sum(x => x.Count));
+            Assert.Equal(11, AnyoneAnswered(Example).Sum(x => x.Count));
         }
 
         [Fact]
         public void Part_1()
         {
-            Assert.Equal(6947, ParsePassports(Input).Sum(x => x.Count));
+            Assert.Equal(6947, AnyoneAnswered(Input).Sum(x => x.Count));
         }
 
         [Fact]
         public void Part_2_example()
         {
-            Assert.Equal(6, ParsePassports2(Example).Sum(x => x.Count));
+            Assert.Equal(6, EveryoneAnswered(Example).Sum(x => x.Count));
         }
 
         [Fact]
         public void Part_2()
         {
-            Assert.Equal(3398, ParsePassports2(Input).Sum(x => x.Count));
+            Assert.Equal(3398, EveryoneAnswered(Input).Sum(x => x.Count));
         }
 
-        private static IEnumerable<ISet<char>> ParsePassports(IReadOnlyList<string> input)
+        private static IEnumerable<ISet<char>> AnyoneAnswered(ReadOnlyMemory<string> input)
         {
-            var correctAnswers = new HashSet<char>();
-
-            foreach (var line in input)
+            foreach (var group in input.Split(string.Empty))
             {
-                if (line == string.Empty && correctAnswers.Count > 0)
-                {
-                    yield return correctAnswers;
+                var correctAnswers = new HashSet<char>();
 
-                    correctAnswers = new HashSet<char>();
-                    continue;
+                foreach (var line in group)
+                {
+                    correctAnswers.UnionWith(line);
                 }
 
-                foreach (var c in line)
-                {
-                    if (Char.IsLetter(c))
-                    {
-                        correctAnswers.Add(c);
-                    }
-                }
-            }
-
-            if (correctAnswers.Count > 0)
-            {
                 yield return correctAnswers;
             }
         }
 
-        private static IEnumerable<ISet<char>> ParsePassports2(IReadOnlyList<string> input)
+        private static IEnumerable<ISet<char>> EveryoneAnswered(ReadOnlyMemory<string> input)
         {
-            HashSet<char> groupAnswers = null;
-
-            foreach (var line in input)
+            foreach (var group in input.Split(string.Empty))
             {
-                if (line == string.Empty)
-                {
-                    if (groupAnswers?.Count > 0)
-                    {
-                        yield return groupAnswers;
-                    }
+                HashSet<char> groupAnswers = null;
 
-                    groupAnswers = null;
-                    continue;
+                foreach (var line in group)
+                {
+                    groupAnswers ??= new HashSet<char>(line);
+                    groupAnswers.IntersectWith(line);
                 }
 
-                var lineAnswers = new HashSet<char>(line);
-
-                groupAnswers ??= lineAnswers;
-
-                groupAnswers.IntersectWith(lineAnswers);
-            }
-
-            if (groupAnswers?.Count > 0)
-            {
                 yield return groupAnswers;
             }
         }
 
-        public static IReadOnlyList<string> Example = @"abc
+
+        public static ReadOnlyMemory<string> Example = @"abc
 
 a
 b
@@ -108,6 +81,6 @@ a
 b".Split(Environment.NewLine);
 
 
-        private static IReadOnlyList<string> Input { get; } = File.ReadAllLines("Day06.input.txt");
+        private static ReadOnlyMemory<string> Input { get; } = File.ReadAllLines("Day06.input.txt");
     }
 }
