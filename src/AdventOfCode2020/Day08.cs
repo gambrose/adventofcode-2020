@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using Xunit;
 
@@ -123,9 +124,21 @@ namespace AdventOfCode2020
 
         private static (string operation, int argument) Parse(string line)
         {
-            var parts = line.Split(" ");
+            Debug.Assert(line.Length > 4);
 
-            return (parts[0], int.Parse(parts[1]));
+            var argument = int.Parse(line.AsSpan(4));
+
+            switch (line[0])
+            {
+                case 'a' when line.StartsWith("acc "):
+                    return ("acc", argument);
+                case 'j' when line.StartsWith("jmp "):
+                    return ("jmp", argument);
+                case 'n' when line.StartsWith("nop "):
+                    return ("nop", argument);
+                default:
+                    throw new ArgumentException();
+            }
         }
 
         private static ReadOnlyMemory<string> Example { get; } = @"nop +0
