@@ -16,7 +16,7 @@ namespace AdventOfCode2020
         [Fact]
         public void Part_2_example()
         {
-            Assert.Equal(8, Run(FixedExample));
+            Assert.Equal(8, Part1(FixedExample));
 
             Assert.Equal(8, Part2(BrokenExample));
         }
@@ -26,31 +26,7 @@ namespace AdventOfCode2020
 
         private static int Part1(ReadOnlyMemory<string> input)
         {
-            int accumulator = 0;
-
-            var visited = new bool[input.Length];
-
-            int i = 0;
-
-            while (visited[i] == false)
-            {
-                visited[i] = true;
-                var (operation, argument) = Parse(input.Span[i]);
-
-                switch (operation)
-                {
-                    case "acc":
-                        accumulator += argument;
-                        i++;
-                        break;
-                    case "jmp":
-                        i += argument;
-                        break;
-                    case "nop":
-                        i++;
-                        break;
-                }
-            }
+            TryRun(input, out var accumulator);
 
             return accumulator;
         }
@@ -75,7 +51,7 @@ namespace AdventOfCode2020
                         break;
                 }
 
-                if (Run(lines) is { } answer)
+                if (TryRun(lines, out var answer))
                 {
                     return answer;
                 }
@@ -86,13 +62,13 @@ namespace AdventOfCode2020
             return default;
         }
 
-        private static int? Run(ReadOnlyMemory<string> input)
+        private static bool TryRun(ReadOnlyMemory<string> input, out int accumulator)
         {
-            int accumulator = 0;
+            accumulator = 0;
 
             var visited = new bool[input.Length];
 
-            int i = 0;
+            var i = 0;
 
             while (visited[i] == false)
             {
@@ -115,11 +91,11 @@ namespace AdventOfCode2020
 
                 if (i >= input.Length)
                 {
-                    return accumulator;
+                    return true;
                 }
             }
 
-            return default;
+            return false;
         }
 
         private static (string operation, int argument) Parse(string line)
