@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace AdventOfCode2020
@@ -11,7 +10,7 @@ namespace AdventOfCode2020
         [Fact]
         public void Part_1_example()
         {
-            var numbers = Example();
+            var numbers = Example;
 
             var (a, b) = SumOfTwoNumbers(numbers.AsSpan(), 2020);
 
@@ -23,9 +22,9 @@ namespace AdventOfCode2020
         }
 
         [Fact]
-        public async Task Part_1()
+        public void Part_1()
         {
-            var numbers = await Input();
+            var numbers = Input;
 
             var (a, b) = SumOfTwoNumbers(numbers.AsSpan(), 2020);
 
@@ -38,7 +37,7 @@ namespace AdventOfCode2020
         [Fact]
         public void Part_2_example()
         {
-            var numbers = Example();
+            var numbers = Example;
 
             var (a, b, c) = SumOfThreeNumbers(numbers.AsSpan(), 2020);
 
@@ -48,9 +47,9 @@ namespace AdventOfCode2020
         }
 
         [Fact]
-        public async Task Part_2()
+        public void Part_2()
         {
-            var numbers = await Input();
+            var numbers = Input;
 
             var (a, b, c) = SumOfThreeNumbers(numbers.AsSpan(), 2020);
 
@@ -59,8 +58,52 @@ namespace AdventOfCode2020
             Assert.Equal(257778836, a * b * c);
         }
 
-        private static int[] Example() => new[]
+        private static (int, int) SumOfTwoNumbers(ReadOnlySpan<int> numbers, int total)
         {
+            Span<bool> seen = stackalloc bool[total];
+
+            foreach (var number in numbers)
+            {
+                if (seen[total - number])
+                {
+                    return (total - number, number);
+                }
+
+                seen[number] = true;
+            }
+
+            return default;
+        }
+
+        private static (int, int, int) SumOfThreeNumbers(ReadOnlySpan<int> numbers, int total)
+        {
+            Span<int> sorted = numbers.ToArray();
+            sorted.Sort();
+
+            while (sorted.Length >= 3)
+            {
+                if (sorted[0] + sorted[1] + sorted[^1] > total)
+                {
+                    sorted = sorted.Slice(0, sorted.Length - 1);
+                    continue;
+                }
+
+                var a = sorted[0];
+                var c = sorted[^1];
+                var b = total - a - c;
+
+                if (sorted.BinarySearch(b) > 0)
+                {
+                    return (a, b, c);
+                }
+
+                sorted = sorted.Slice(1);
+            }
+
+            return default;
+        }
+
+        private static int[] Example { get; } = {
             1721,
             979,
             366,
@@ -69,63 +112,6 @@ namespace AdventOfCode2020
             1456
         };
 
-        private static async Task<int[]> Input()
-        {
-            var lines = await File.ReadAllLinesAsync("Day01.input.txt");
-
-            return lines.Select(int.Parse).ToArray();
-        }
-
-        private static (int, int) SumOfTwoNumbers(Span<int> numbers, int total)
-        {
-            numbers.Sort();
-
-            while (numbers.Length >= 2)
-            {
-                var sum = numbers[0] + numbers[^1];
-                if (sum > total)
-                {
-                    numbers = numbers.Slice(0, numbers.Length - 1);
-
-                }
-                else if (sum < total)
-                {
-                    numbers = numbers.Slice(1);
-                }
-                else
-                {
-                    return (numbers[0], numbers[^1]);
-                }
-            }
-
-            return default;
-        }
-
-        private static (int, int, int) SumOfThreeNumbers(Span<int> numbers, int total)
-        {
-            numbers.Sort();
-
-            while (numbers.Length >= 3)
-            {
-                if (numbers[0] + numbers[1] + numbers[^1] > total)
-                {
-                    numbers = numbers.Slice(0, numbers.Length - 1);
-                    continue;
-                }
-
-                var a = numbers[0];
-                var c = numbers[^1];
-                var b = total - a - c;
-
-                if (numbers.BinarySearch(b) > 0)
-                {
-                    return (a, b, c);
-                }
-
-                numbers = numbers.Slice(1);
-            }
-
-            return default;
-        }
+        private static int[] Input { get; } = File.ReadLines("Day01.input.txt").Select(int.Parse).ToArray();
     }
 }
