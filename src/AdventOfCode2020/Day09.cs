@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using Xunit;
 
 namespace AdventOfCode2020
@@ -13,7 +14,10 @@ namespace AdventOfCode2020
         public void Part_1() => Assert.Equal(375054920, Part1(Input));
 
         [Fact]
-        public void Part_2() => Assert.Equal(default, Part2(Input));
+        public void Part_2_example() => Assert.Equal(62, Part2(Example, 5));
+
+        [Fact]
+        public void Part_2() => Assert.Equal(54142584, Part2(Input));
 
         private static long Part1(ReadOnlyMemory<string> input, int preamble = 25)
         {
@@ -34,8 +38,19 @@ namespace AdventOfCode2020
             return 0;
         }
 
-        private static int Part2(ReadOnlyMemory<string> input)
+        private static long Part2(ReadOnlyMemory<string> input, int preamble = 25)
         {
+            Span<long> numbers = Array.ConvertAll(input.ToArray(), long.Parse);
+
+            var total = Part1(input, preamble);
+
+            var range = ContiguousSetThatSumTo(numbers, total);
+
+            if (range.Length > 2)
+            {
+                return range.ToArray().Min() + range.ToArray().Max();
+            }
+
             return default;
         }
 
@@ -62,6 +77,39 @@ namespace AdventOfCode2020
             }
 
             return default;
+        }
+
+        private static ReadOnlySpan<long> ContiguousSetThatSumTo(Span<long> numbers, long total)
+        {
+            for (int start = 0; start < numbers.Length; start++)
+            {
+                var length = 1;
+                var runningTotal = Sum(numbers.Slice(start, length));
+                while (runningTotal < total)
+                {
+                    length++;
+                    runningTotal = Sum(numbers.Slice(start, length));
+                }
+
+                if (runningTotal == total)
+                {
+                    return numbers.Slice(start, length);
+                }
+            }
+
+            return ReadOnlySpan<long>.Empty;
+        }
+
+        private static long Sum(Span<long> numbers)
+        {
+            long total = 0;
+
+            foreach (var number in numbers)
+            {
+                total += number;
+            }
+
+            return total;
         }
 
         private static ReadOnlyMemory<string> Example { get; } = @"35
