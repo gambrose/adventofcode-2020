@@ -79,11 +79,11 @@ namespace AdventOfCode2020
             return default;
         }
 
-        private static ReadOnlySpan<long> ContiguousSetThatSumTo(Span<long> numbers, long total)
+        private static ReadOnlySpan<long> ContiguousSetThatSumTo(ReadOnlySpan<long> numbers, long total)
         {
             for (int start = 0; start < numbers.Length; start++)
             {
-                var length = 1;
+                var length = 2;
                 var runningTotal = Sum(numbers.Slice(start, length));
                 while (runningTotal < total)
                 {
@@ -100,7 +100,7 @@ namespace AdventOfCode2020
             return ReadOnlySpan<long>.Empty;
         }
 
-        private static long Sum(Span<long> numbers)
+        private static long Sum(ReadOnlySpan<long> numbers)
         {
             long total = 0;
 
