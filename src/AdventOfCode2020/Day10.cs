@@ -1,7 +1,5 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Linq;
 using Xunit;
@@ -20,21 +18,31 @@ namespace AdventOfCode2020
         public void Part_1() => Assert.Equal(1820, Part1(Input));
 
         [Fact]
-        public void Part_2_example() => Assert.Equal(default, Part2(Example));
+        public void Part_2_first_example() => Assert.Equal(8, Part2(Example));
 
         [Fact]
-        public void Part_2() => Assert.Equal(default, Part2(Input));
+        public void Part_2_second_example() => Assert.Equal(19208, Part2(Example2));
+
+        [Fact]
+        public void Part_2() => Assert.Equal(3454189699072, Part2(Input));
 
         private static int Part1(ReadOnlyMemory<int> input)
         {
-            var foo = Diffs(input).GroupBy(x => x).ToDictionary(x => x.Key, x => x.Count());
+            var diffCounts = Diffs(input).GroupBy(x => x).ToDictionary(x => x.Key, x => x.Count());
 
-            return foo[1] * foo[3];
+            return diffCounts[1] * diffCounts[3];
         }
 
-        private static int Part2(ReadOnlyMemory<int> input)
+        private static long Part2(ReadOnlyMemory<int> input)
         {
-            return default;
+            Span<int> adapters = new int[input.Length + 2];
+            input.Span.CopyTo(adapters.Slice(1));
+            adapters[1..^1].Sort();
+            adapters[^1] = adapters[^2] + 3;
+
+            var root = Variations(new Dictionary<int, Node>(), adapters);
+
+            return root.Possibilities;
         }
 
         private static IEnumerable<int> Diffs(ReadOnlyMemory<int> input)
@@ -52,6 +60,55 @@ namespace AdventOfCode2020
             }
 
             yield return 3;
+        }
+
+        private static Node Variations(Dictionary<int, Node> nodes, ReadOnlySpan<int> adapters)
+        {
+            var adapter = adapters[0];
+
+            if (nodes.TryGetValue(adapter, out var existing))
+            {
+                return existing;
+            }
+
+            var variations = new List<Node>();
+
+            if (adapters.Length > 1 && adapters[1] - adapter <= 3)
+            {
+                variations.Add(Variations(nodes, adapters.Slice(1)));
+            }
+
+            if (adapters.Length > 2 && adapters[2] - adapter <= 3)
+            {
+                variations.Add(Variations(nodes, adapters.Slice(2)));
+            }
+
+            if (adapters.Length > 3 && adapters[3] - adapter <= 3)
+            {
+                variations.Add(Variations(nodes, adapters.Slice(3)));
+            }
+
+            var node = new Node(adapter, variations);
+
+            nodes.Add(node.Adapter, node);
+
+            return node;
+        }
+
+        public readonly struct Node
+        {
+            public int Adapter { get; }
+
+            public Node[] Variations { get; }
+
+            public long Possibilities { get; }
+
+            public Node(int adapter, IEnumerable<Node> variations)
+            {
+                Adapter = adapter;
+                Variations = variations.ToArray();
+                Possibilities = Variations.Length == 0 ? 1 : Variations.Sum(n => n.Possibilities);
+            }
         }
 
         private static ReadOnlyMemory<int> Example { get; } = @"16
