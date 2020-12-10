@@ -83,35 +83,30 @@ namespace AdventOfCode2020
 
         private static ReadOnlySpan<long> ContiguousSetThatSumTo(ReadOnlySpan<long> numbers, long total)
         {
-            for (int start = 0; start < numbers.Length; start++)
+            int start = 0;
+            var end = 2;
+
+            long windowTotal = numbers[0] + numbers[1];
+
+            while (end < numbers.Length)
             {
-                var length = 2;
-                var runningTotal = Sum(numbers.Slice(start, length));
-                while (runningTotal < total)
+                if (windowTotal > total)
                 {
-                    length++;
-                    runningTotal = Sum(numbers.Slice(start, length));
+                    windowTotal -= numbers[start++];
                 }
 
-                if (runningTotal == total)
+                if (windowTotal < total)
                 {
-                    return numbers.Slice(start, length);
+                    windowTotal += numbers[end++];
+                }
+
+                if (windowTotal == total)
+                {
+                    return numbers[start..end];
                 }
             }
 
             return ReadOnlySpan<long>.Empty;
-        }
-
-        private static long Sum(ReadOnlySpan<long> numbers)
-        {
-            long total = 0;
-
-            foreach (var number in numbers)
-            {
-                total += number;
-            }
-
-            return total;
         }
 
         private static ReadOnlyMemory<long> Example { get; } = @"35
