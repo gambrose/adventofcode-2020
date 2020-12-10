@@ -71,24 +71,26 @@ namespace AdventOfCode2020
                 return existing;
             }
 
-            var variations = new List<Node>();
+            const int maxDiff = 3;
 
-            if (adapters.Length > 1 && adapters[1] - adapter <= 3)
+            Node node;
+            if (adapters.Length > 1)
             {
-                variations.Add(Variations(nodes, adapters.Slice(1)));
-            }
+                var variations = new List<Node>(maxDiff);
 
-            if (adapters.Length > 2 && adapters[2] - adapter <= 3)
+                var children = adapters.Slice(1);
+                while (children.Length > 0 && children[0] - adapter <= maxDiff)
+                {
+                    variations.Add(Variations(nodes, children));
+                    children = children.Slice(1);
+                }
+
+                node = new Node(adapter, variations);
+            }
+            else
             {
-                variations.Add(Variations(nodes, adapters.Slice(2)));
+                node = new Node(adapter);
             }
-
-            if (adapters.Length > 3 && adapters[3] - adapter <= 3)
-            {
-                variations.Add(Variations(nodes, adapters.Slice(3)));
-            }
-
-            var node = new Node(adapter, variations);
 
             nodes.Add(node.Adapter, node);
 
@@ -102,6 +104,13 @@ namespace AdventOfCode2020
             public Node[] Variations { get; }
 
             public long Possibilities { get; }
+
+            public Node(int adapter)
+            {
+                Adapter = adapter;
+                Variations = Array.Empty<Node>();
+                Possibilities = 1;
+            }
 
             public Node(int adapter, IEnumerable<Node> variations)
             {
