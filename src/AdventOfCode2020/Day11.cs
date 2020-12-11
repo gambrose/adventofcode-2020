@@ -17,9 +17,9 @@ namespace AdventOfCode2020
         public void Part_1_example_mutations()
         {
             var grid = Parse(Example);
-            var rules = grid.Seats().Select(seat => (Rule)new Part1Rule(seat)).ToList();
+            var rules = new Part1Rules(grid);
 
-            Assert.True(ApplyRules(rules));
+            Assert.True(rules.Apply());
             Assert.Equal(@"#.##.##.##
 #######.##
 #.#.#..#..
@@ -31,7 +31,7 @@ namespace AdventOfCode2020
 #.######.#
 #.#####.##", grid.ToString());
 
-            Assert.True(ApplyRules(rules));
+            Assert.True(rules.Apply());
             Assert.Equal(@"#.LL.L#.##
 #LLLLLL.L#
 L.L.L..L..
@@ -118,11 +118,11 @@ LLL###LLL#
             };
 
             var grid = Parse(Example);
-            var rules = grid.Seats().Select(seat => (Rule)new Part2Rule(seat)).ToList();
+            var rules = new Part2Rules(grid);
 
             foreach (var mutation in mutations)
             {
-                Assert.True(ApplyRules(rules));
+                Assert.True(rules.Apply());
                 Assert.Equal(mutation, grid.ToString());
             }
         }
@@ -172,9 +172,9 @@ LLL###LLL#
         {
             var grid = Parse(input);
 
-            var rules = grid.Seats().Select(seat => (Rule)new Part1Rule(seat)).ToList();
+            var rules = new Part1Rules(grid);
 
-            while (ApplyRules(rules)) { }
+            while (rules.Apply()) { }
 
             return grid.Seats().Count(seat => seat.Occupied);
         }
@@ -182,9 +182,10 @@ LLL###LLL#
         private static long Part2(ReadOnlyMemory<string> input)
         {
             var grid = Parse(input);
-            var rules = grid.Seats().Select(seat => (Rule)new Part2Rule(seat)).ToList();
 
-            while (ApplyRules(rules)) { }
+            var rules = new Part2Rules(grid);
+
+            while (rules.Apply()) { }
 
             return grid.Seats().Count(seat => seat.Occupied);
         }
@@ -200,19 +201,6 @@ LLL###LLL#
             }
 
             return grid;
-        }
-
-        private static bool ApplyRules(IEnumerable<Rule> rules)
-        {
-            var toChange = rules.Where(rule => rule.ShouldChange()).ToList();
-
-            foreach (var rule in toChange)
-            {
-                var seat = rule.Seat;
-                seat.Occupied = !seat.Occupied;
-            }
-
-            return toChange.Count > 0;
         }
 
         private readonly struct Grid
@@ -332,8 +320,7 @@ LLL###LLL#
 
         private readonly struct Seat
         {
-            private static readonly (int, int)[] Directions = new[]
-            {
+            private static readonly (int, int)[] Directions = {
                 (-1, -1),
                 (0, -1),
                 (1, -1),
@@ -356,7 +343,9 @@ LLL###LLL#
 
             public bool Occupied
             {
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 get => _grid[Position] == '#';
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 set => _grid[Position] = value ? '#' : 'L';
             }
 
@@ -400,74 +389,117 @@ LLL###LLL#
             }
         }
 
-        private interface Rule
+        private class Part1Rules
         {
-            Seat Seat { get; }
+            private readonly (Seat seat, Seat[] adjacentSeats)[] _seats;
+            private readonly bool[] _changes;
 
-            bool ShouldChange();
-        }
-
-        private readonly struct Part1Rule : Rule
-        {
-            public Part1Rule(Seat seat)
+            public Part1Rules(Grid grid)
             {
-                Seat = seat;
-                AdjacentSeats = seat.AdjacentSeats().ToArray();
+                _seats = grid.Seats().Select(seat =>
+                {
+                    var adjacentSeats = seat.AdjacentSeats().ToArray();
+                    return (seat, adjacentSeats);
+                }).ToArray();
+                _changes = new bool[_seats.Length];
             }
 
-            public Seat Seat { get; }
-
-            public Seat[] AdjacentSeats { get; }
-
-            public bool ShouldChange()
+            public bool Apply()
             {
-                int adjacentOccupiedSeats = 0;
-                foreach (var seat in AdjacentSeats)
+                static bool ShouldChange(Seat seat, Seat[] adjacentSeats)
                 {
+                    int adjacentOccupiedSeats = 0;
+                    foreach (var adjacentSeat in adjacentSeats)
+                    {
+                        if (adjacentSeat.Occupied)
+                        {
+                            adjacentOccupiedSeats++;
+                        }
+                    }
+
                     if (seat.Occupied)
                     {
-                        adjacentOccupiedSeats++;
+                        return adjacentOccupiedSeats >= 4;
+                    }
+
+                    return adjacentOccupiedSeats == 0;
+                }
+
+                for (var i = 0; i < _seats.Length; i++)
+                {
+                    var (seat, adjacentSeats) = _seats[i];
+                    _changes[i] = ShouldChange(seat, adjacentSeats);
+                }
+
+                int changes = 0;
+                for (var i = 0; i < _seats.Length; i++)
+                {
+                    if (_changes[i])
+                    {
+                        var (seat, _) = _seats[i];
+                        seat.Occupied = !seat.Occupied;
+                        changes++;
                     }
                 }
 
-                if (Seat.Occupied)
-                {
-                    return adjacentOccupiedSeats >= 4;
-                }
-
-                return adjacentOccupiedSeats == 0;
+                return changes > 0;
             }
         }
 
-        private readonly struct Part2Rule : Rule
+        private class Part2Rules
         {
-            public Part2Rule(Seat seat)
+            private readonly (Seat seat, Seat[] visibleSeats)[] _seats;
+            private readonly bool[] _changes;
+
+            public Part2Rules(Grid grid)
             {
-                Seat = seat;
-                VisibleSeats = seat.VisibleSeats().ToArray();
+                _seats = grid.Seats().Select(seat =>
+                {
+                    var visibleSeats = seat.VisibleSeats().ToArray();
+                    return (seat, visibleSeats);
+                }).ToArray();
+                _changes = new bool[_seats.Length];
             }
 
-            public Seat Seat { get; }
-
-            public Seat[] VisibleSeats { get; }
-
-            public bool ShouldChange()
+            public bool Apply()
             {
-                int visibleOccupiedSeats = 0;
-                foreach (var seat in VisibleSeats)
+                static bool ShouldChange(Seat seat, Seat[] visibleSeats)
                 {
+                    int visibleOccupiedSeats = 0;
+                    foreach (var visibleSeat in visibleSeats)
+                    {
+                        if (visibleSeat.Occupied)
+                        {
+                            visibleOccupiedSeats++;
+                        }
+                    }
+
                     if (seat.Occupied)
                     {
-                        visibleOccupiedSeats++;
+                        return visibleOccupiedSeats >= 5;
+                    }
+
+                    return visibleOccupiedSeats == 0;
+                }
+
+                for (var i = 0; i < _seats.Length; i++)
+                {
+                    var (seat, visibleSeats) = _seats[i];
+                    _changes[i] = ShouldChange(seat, visibleSeats);
+                }
+
+                int changes = 0;
+                for (var i = 0; i < _seats.Length; i++)
+                {
+                    if (_changes[i])
+                    {
+                        var (seat, _) = _seats[i];
+                        seat.Occupied = !seat.Occupied;
+                        changes++;
                     }
                 }
 
-                if (Seat.Occupied)
-                {
-                    return visibleOccupiedSeats >= 5;
-                }
-
-                return visibleOccupiedSeats == 0;
+                return changes > 0;
             }
         }
 
