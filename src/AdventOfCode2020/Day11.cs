@@ -17,7 +17,7 @@ namespace AdventOfCode2020
         {
             var grid = Parse(Example);
 
-            Assert.True(ApplyRule(grid));
+            Assert.True(ApplyPart1Rules(grid));
             Assert.Equal(@"#.##.##.##
 #######.##
 #.#.#..#..
@@ -29,7 +29,7 @@ namespace AdventOfCode2020
 #.######.#
 #.#####.##", grid.ToString());
 
-            Assert.True(ApplyRule(grid));
+            Assert.True(ApplyPart1Rules(grid));
             Assert.Equal(@"#.LL.L#.##
 #LLLLLL.L#
 L.L.L..L..
@@ -46,28 +46,141 @@ L.L.L..L..
         public void Part_1() => Assert.Equal(2093, Part1(Input));
 
         [Fact]
-        public void Part_2_example() => Assert.Equal(default, Part2(Example));
+        public void Part_2_example() => Assert.Equal(26, Part2(Example));
 
         [Fact]
-        public void Part_2() => Assert.Equal(default, Part2(Input));
+        public void Part_2_example_mutations()
+        {
+            var grid = Parse(Example);
+
+            string[] mutations =
+            {
+                @"#.##.##.##
+#######.##
+#.#.#..#..
+####.##.##
+#.##.##.##
+#.#####.##
+..#.#.....
+##########
+#.######.#
+#.#####.##",
+                @"#.LL.LL.L#
+#LLLLLL.LL
+L.L.L..L..
+LLLL.LL.LL
+L.LL.LL.LL
+L.LLLLL.LL
+..L.L.....
+LLLLLLLLL#
+#.LLLLLL.L
+#.LLLLL.L#",
+                @"#.L#.##.L#
+#L#####.LL
+L.#.#..#..
+##L#.##.##
+#.##.#L.##
+#.#####.#L
+..#.#.....
+LLL####LL#
+#.L#####.L
+#.L####.L#",
+                @"#.L#.L#.L#
+#LLLLLL.LL
+L.L.L..#..
+##LL.LL.L#
+L.LL.LL.L#
+#.LLLLL.LL
+..L.L.....
+LLLLLLLLL#
+#.LLLLL#.L
+#.L#LL#.L#",
+                @"#.L#.L#.L#
+#LLLLLL.LL
+L.L.L..#..
+##L#.#L.L#
+L.L#.#L.L#
+#.L####.LL
+..#.#.....
+LLL###LLL#
+#.LLLLL#.L
+#.L#LL#.L#",
+                @"#.L#.L#.L#
+#LLLLLL.LL
+L.L.L..#..
+##L#.#L.L#
+L.L#.LL.L#
+#.LLLL#.LL
+..#.L.....
+LLL###LLL#
+#.LLLLL#.L
+#.L#LL#.L#"
+            };
+
+            foreach (var mutation in mutations)
+            {
+                Assert.True(ApplyPart2Rules(grid));
+                Assert.Equal(mutation, grid.ToString());
+            }
+        }
+
+        [Fact]
+        public void Part_2_seat_examples()
+        {
+            var grid = Parse(@".......#.
+...#.....
+.#.......
+.........
+..#L....#
+....#....
+.........
+#........
+...#.....".Split(Environment.NewLine));
+
+            var seat = grid.Seats().First(s => s.Occupied == false);
+
+            Assert.Equal(8, seat.OccupiedVisibleSeats());
+
+            grid = Parse(@".............
+.L.L.#.#.#.#.
+.............".Split(Environment.NewLine));
+
+            seat = grid.Seats().First();
+
+            Assert.Equal(0, seat.OccupiedVisibleSeats());
+
+            grid = Parse(@".##.##.
+#.#.#.#
+##...##
+...L...
+##...##
+#.#.#.#
+.##.##.".Split(Environment.NewLine));
+
+            seat = grid.Seats().First(s => s.Occupied == false);
+
+            Assert.Equal(0, seat.OccupiedVisibleSeats());
+        }
+
+        [Fact]
+        public void Part_2() => Assert.Equal(1862, Part2(Input));
 
         private static int Part1(ReadOnlyMemory<string> input)
         {
             var grid = Parse(input);
 
-            var visualisation = new List<string> { grid.ToString() };
-
-            while (ApplyRule(grid))
-            {
-                visualisation.Add(grid.ToString());
-            }
+            while (ApplyPart1Rules(grid)) { }
 
             return grid.Seats().Count(seat => seat.Occupied);
         }
 
         private static long Part2(ReadOnlyMemory<string> input)
         {
-            return default;
+            var grid = Parse(input);
+
+            while (ApplyPart2Rules(grid)) { }
+
+            return grid.Seats().Count(seat => seat.Occupied);
         }
 
         private static Grid Parse(ReadOnlyMemory<string> input)
@@ -83,8 +196,20 @@ L.L.L..L..
             return grid;
         }
 
-        private static bool ApplyRule(Grid grid)
+        private static bool ApplyPart1Rules(Grid grid)
         {
+            static bool ShouldChange(Seat seat)
+            {
+                if (seat.Occupied)
+                {
+                    return seat.OccupiedAdjacentSeats >= 4;
+                }
+                else
+                {
+                    return seat.OccupiedAdjacentSeats == 0;
+                }
+            }
+
             var toChange = grid.Seats().Where(ShouldChange).ToList();
 
             foreach (var seat in toChange)
@@ -95,16 +220,28 @@ L.L.L..L..
             return toChange.Count > 0;
         }
 
-        private static bool ShouldChange(Seat seat)
+        private static bool ApplyPart2Rules(Grid grid)
         {
-            if (seat.Occupied)
+            static bool ShouldChange(Seat seat)
             {
-                return seat.OccupiedAdjacentSeats >= 4;
+                if (seat.Occupied)
+                {
+                    return seat.OccupiedVisibleSeats() >= 5;
+                }
+                else
+                {
+                    return seat.OccupiedVisibleSeats() == 0;
+                }
             }
-            else
+
+            var toChange = grid.Seats().Where(ShouldChange).ToList();
+
+            foreach (var seat in toChange)
             {
-                return seat.OccupiedAdjacentSeats == 0;
+                seat.Occupied = !seat.Occupied;
             }
+
+            return toChange.Count > 0;
         }
 
         private readonly struct Grid
@@ -208,6 +345,58 @@ L.L.L..L..
                     }
 
                     return count;
+                }
+            }
+
+            public int OccupiedVisibleSeats()
+            {
+                var directions = new[]
+                {
+                    (-1, -1),
+                    (0, -1),
+                    (1, -1),
+                    (1, 0),
+                    (1, 1),
+                    (0, 1),
+                    (-1, 1),
+                    (-1, 0)
+                };
+
+                int count = 0;
+                foreach (var vector in directions)
+                {
+                    var seat = (Traverse(vector).FirstOrDefault(cell => cell != '.'));
+
+                    if (seat == '#')
+                    {
+                        count++;
+                    }
+                }
+
+
+                return count;
+            }
+
+            private IEnumerable<char> Traverse((int x, int y) vector)
+            {
+                var (x, y) = (X, Y);
+
+                while (true)
+                {
+                    x += vector.x;
+                    y += vector.y;
+
+                    if (x < 0 || x >= map.Width)
+                    {
+                        yield break;
+                    }
+
+                    if (y < 0 || y >= map.Height)
+                    {
+                        yield break;
+                    }
+
+                    yield return map[x, y];
                 }
             }
 
