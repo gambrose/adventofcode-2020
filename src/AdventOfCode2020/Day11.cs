@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using Xunit;
 
@@ -233,8 +234,10 @@ LLL###LLL#
 
             public char this[Position position]
             {
-                get => Row(position.Y).Span[position.X];
-                set => Row(position.Y).Span[position.X] = value;
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                get => _cells.Span[position.Y * Width + position.X];
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                set => _cells.Span[position.Y * Width + position.X] = value;
             }
 
             public IEnumerable<Position> Traverse(Position start, (int x, int y) directionVector)
