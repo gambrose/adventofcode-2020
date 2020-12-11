@@ -246,30 +246,48 @@ LLL###LLL#
 
         private readonly struct Grid
         {
-            private readonly Memory<char> map;
+            private readonly Memory<char> _cells;
 
             public Grid(int width, int height)
             {
                 Width = width;
                 Height = height;
-                map = new char[width * height];
+                _cells = new char[width * height];
             }
 
             public int Width { get; }
 
             public int Height { get; }
 
-            public Memory<char> Row(int y) => map.Slice(y * Width, Width);
+            public Memory<char> Row(int y) => _cells.Slice(y * Width, Width);
 
-            public char this[int x, int y]
+            public char this[Position position]
             {
-                get => Row(y).Span[x];
-                set => Row(y).Span[x] = value;
+                get => Row(position.Y).Span[position.X];
+                set => Row(position.Y).Span[position.X] = value;
             }
 
-            public void CopyTo(Grid grid)
+            public IEnumerable<Position> Traverse(Position start, (int x, int y) directionVector)
             {
-                map.CopyTo(grid.map);
+                var (x, y) = start;
+
+                while (true)
+                {
+                    x += directionVector.x;
+                    y += directionVector.y;
+
+                    if (x < 0 || x >= Width)
+                    {
+                        yield break;
+                    }
+
+                    if (y < 0 || y >= Height)
+                    {
+                        yield break;
+                    }
+
+                    yield return new Position(x, y);
+                }
             }
 
             public IEnumerable<Seat> Seats()
@@ -280,11 +298,11 @@ LLL###LLL#
 
                     for (int x = 0; x < row.Length; x++)
                     {
-                        var position = row.Span[x];
+                        var cell = row.Span[x];
 
-                        if (position == 'L' || position == '#')
+                        if (cell == 'L' || cell == '#')
                         {
-                            yield return new Seat(this, x, y);
+                            yield return new Seat(this, new Position(x, y));
                         }
                     }
                 }
@@ -306,13 +324,12 @@ LLL###LLL#
             }
         }
 
-        private readonly struct Seat
+        private readonly struct Position
         {
-            private readonly Grid map;
-
-            public Seat(Grid map, int x, int y)
+            public Position(int x, int y)
             {
-                this.map = map;
+                if (x < 0) throw new ArgumentOutOfRangeException(nameof(x));
+                if (y < 0) throw new ArgumentOutOfRangeException(nameof(y));
                 X = x;
                 Y = y;
             }
@@ -320,10 +337,34 @@ LLL###LLL#
             public int X { get; }
             public int Y { get; }
 
+            public void Deconstruct(out int x, out int y)
+            {
+                x = X;
+                y = Y;
+            }
+
+            public override string ToString()
+            {
+                return $"{X}, {Y}";
+            }
+        }
+
+        private readonly struct Seat
+        {
+            private readonly Grid _grid;
+
+            public Seat(Grid grid, Position position)
+            {
+                _grid = grid;
+                Position = position;
+            }
+
+            public Position Position { get; }
+
             public bool Occupied
             {
-                get => map[X, Y] == '#';
-                set => map[X, Y] = value ? '#' : 'L';
+                get => _grid[Position] == '#';
+                set => _grid[Position] = value ? '#' : 'L';
             }
 
             public int OccupiedAdjacentSeats
@@ -373,55 +414,41 @@ LLL###LLL#
                     }
                 }
 
-
                 return count;
             }
 
             private IEnumerable<char> Traverse((int x, int y) vector)
             {
-                var (x, y) = (X, Y);
-
-                while (true)
+                foreach (var position in _grid.Traverse(Position, vector))
                 {
-                    x += vector.x;
-                    y += vector.y;
-
-                    if (x < 0 || x >= map.Width)
-                    {
-                        yield break;
-                    }
-
-                    if (y < 0 || y >= map.Height)
-                    {
-                        yield break;
-                    }
-
-                    yield return map[x, y];
+                    yield return _grid[position];
                 }
             }
 
             private void Surroundings(Span<char> surroundings)
             {
-                bool left = X > 0;
-                bool right = X + 1 < map.Width;
-                Range gridRange = (left ? X - 1 : X)..(right ? X + 2 : X + 1);
+                var (x, y) = Position;
+
+                bool left = x > 0;
+                bool right = x + 1 < _grid.Width;
+                Range gridRange = (left ? x - 1 : x)..(right ? x + 2 : x + 1);
                 Range surroundingRange = (left ? 0 : 1)..(right ? 3 : 2);
 
                 surroundings.Fill(' ');
 
                 var row = surroundings.Slice(0, 3);
-                if (Y > 0)
+                if (y > 0)
                 {
-                    map.Row(Y - 1)[gridRange].Span.CopyTo(row[surroundingRange]);
+                    _grid.Row(y - 1)[gridRange].Span.CopyTo(row[surroundingRange]);
                 }
 
                 row = surroundings.Slice(3, 3);
-                map.Row(Y)[gridRange].Span.CopyTo(row[surroundingRange]);
+                _grid.Row(y)[gridRange].Span.CopyTo(row[surroundingRange]);
 
                 row = surroundings.Slice(6, 3);
-                if (Y + 1 < map.Height)
+                if (y + 1 < _grid.Height)
                 {
-                    map.Row(Y + 1)[gridRange].Span.CopyTo(row[surroundingRange]);
+                    _grid.Row(y + 1)[gridRange].Span.CopyTo(row[surroundingRange]);
                 }
             }
 
