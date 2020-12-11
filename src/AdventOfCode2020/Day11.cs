@@ -138,7 +138,7 @@ LLL###LLL#
 ....#....
 .........
 #........
-...#.....".Split(Environment.NewLine));
+...#.....".SplitLines());
 
             var seat = grid.Seats().First(s => s.Occupied == false);
 
@@ -146,7 +146,7 @@ LLL###LLL#
 
             grid = Parse(@".............
 .L.L.#.#.#.#.
-.............".Split(Environment.NewLine));
+.............".SplitLines());
 
             seat = grid.Seats().First();
 
@@ -158,7 +158,7 @@ LLL###LLL#
 ...L...
 ##...##
 #.#.#.#
-.##.##.".Split(Environment.NewLine));
+.##.##.".SplitLines());
 
             seat = grid.Seats().First(s => s.Occupied == false);
 
@@ -512,7 +512,7 @@ L.LLLLL.LL
 ..L.L.....
 LLLLLLLLLL
 L.LLLLLL.L
-L.LLLLL.LL".Split(Environment.NewLine).ToArray();
+L.LLLLL.LL".SplitLines();
 
         private static ReadOnlyMemory<string> Input { get; } = File.ReadLines("Day11.input.txt").ToArray();
     }

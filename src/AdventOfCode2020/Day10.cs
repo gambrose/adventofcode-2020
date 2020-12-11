@@ -130,7 +130,7 @@ namespace AdventOfCode2020
 19
 6
 12
-4".Split(Environment.NewLine).Select(int.Parse).ToArray();
+4".SplitLines().Select(int.Parse).ToArray();
 
         private static ReadOnlyMemory<int> Example2 { get; } = @"28
 33
@@ -162,7 +162,7 @@ namespace AdventOfCode2020
 2
 34
 10
-3".Split(Environment.NewLine).Select(int.Parse).ToArray();
+3".SplitLines().Select(int.Parse).ToArray();
 
         private static ReadOnlyMemory<int> Input { get; } = File.ReadLines("Day10.input.txt").Select(int.Parse).ToArray();
     }

@@ -78,7 +78,7 @@ a
 a
 a
 
-b".Split(Environment.NewLine);
+b".SplitLines();
 
 
         private static ReadOnlyMemory<string> Input { get; } = File.ReadAllLines("Day06.input.txt");

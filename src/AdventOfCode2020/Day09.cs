@@ -128,7 +128,7 @@ namespace AdventOfCode2020
 299
 277
 309
-576".Split(Environment.NewLine).Select(long.Parse).ToArray();
+576".SplitLines().Select(long.Parse).ToArray();
 
         private static ReadOnlyMemory<long> Input { get; } = File.ReadLines("Day09.input.txt").Select(long.Parse).ToArray();
     }

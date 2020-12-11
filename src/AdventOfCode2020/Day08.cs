@@ -125,7 +125,7 @@ jmp -3
 acc -99
 acc +1
 jmp -4
-acc +6".Split(Environment.NewLine);
+acc +6".SplitLines();
 
         private static ReadOnlyMemory<string> BrokenExample { get; } = @"nop +0
 acc +1
@@ -135,7 +135,7 @@ jmp -3
 acc -99
 acc +1
 jmp -4
-acc +6".Split(Environment.NewLine);
+acc +6".SplitLines();
 
         private static ReadOnlyMemory<string> FixedExample { get; } = @"nop +0
 acc +1
@@ -145,7 +145,7 @@ jmp -3
 acc -99
 acc +1
 nop -4
-acc +6".Split(Environment.NewLine);
+acc +6".SplitLines();
 
         private static ReadOnlyMemory<string> Input { get; } = File.ReadAllLines("Day08.input.txt");
     }
