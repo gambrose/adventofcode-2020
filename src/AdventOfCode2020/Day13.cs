@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Xunit;
@@ -16,11 +17,11 @@ namespace AdventOfCode2020
         [Fact]
         public void Part_2_example()
         {
-            Assert.Equal(default, Part2(Example));
+            Assert.Equal(1068781, Part2(Example));
         }
 
         [Fact]
-        public void Part_2() => Assert.Equal(default, Part2(Input));
+        public void Part_2() => Assert.Equal(800177252346225, Part2(Input));
 
         private static int Part1(ReadOnlyMemory<string> input)
         {
@@ -44,7 +45,36 @@ namespace AdventOfCode2020
 
         private static long Part2(ReadOnlyMemory<string> input)
         {
-            return default;
+            var buses = input.Span[1].Split(',')
+                .Select((id, offset) => (id, offset))
+                .Where(bus => bus.id != "x")
+                .Select(bus => (id: int.Parse(bus.id!), bus.offset))
+                .ToArray();
+
+            long timestamp = 0;
+            long step = 1;
+
+            var search = buses.AsSpan();
+
+            while (search.Length > 0)
+            {
+                var (id, offset) = search[0];
+
+                while (true)
+                {
+                    timestamp += step;
+
+                    if ((timestamp + offset) % id == 0)
+                    {
+                        break;
+                    }
+                }
+
+                step *= id;
+                search = search.Slice(1);
+            }
+
+            return timestamp;
         }
 
         private static ReadOnlyMemory<string> Example { get; } = @"939
