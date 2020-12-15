@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -20,6 +19,7 @@ namespace AdventOfCode2020
         [InlineData("0,3,6", 436)]
         [InlineData("1,3,2", 1)]
         [InlineData("2,1,3", 10)]
+        [InlineData("1,2,3", 27)]
         [InlineData("2,3,1", 78)]
         [InlineData("3,2,1", 438)]
         [InlineData("3,1,2", 1836)]
@@ -28,14 +28,18 @@ namespace AdventOfCode2020
         [Fact]
         public void Part_1() => Assert.Equal(536, Part1(Input));
 
-        [Fact]
-        public void Part_2_example()
-        {
-            Assert.Equal(default, Part2(""));
-        }
+        [Theory]
+        [InlineData("0,3,6", 175594)]
+        [InlineData("1,3,2", 2578)]
+        [InlineData("2,1,3", 3544142)]
+        [InlineData("1,2,3", 261214)]
+        [InlineData("2,3,1", 6895259)]
+        [InlineData("3,2,1", 18)]
+        [InlineData("3,1,2", 362)]
+        public void Part_2_examples(string startingNumbers, int answer) => Assert.Equal(answer, Part2(startingNumbers));
 
         [Fact]
-        public void Part_2() => Assert.Equal(default, Part2(Input));
+        public void Part_2() => Assert.Equal(24065124, Part2(Input));
 
         private static long Part1(string input)
         {
@@ -46,7 +50,9 @@ namespace AdventOfCode2020
 
         private static long Part2(string input)
         {
-            return default;
+            var startingNumbers = input.Split(",").Select(int.Parse).ToArray();
+
+            return Play(startingNumbers).Take(30000000).Last();
         }
 
         private static IEnumerable<int> Play(int[] startingNumbers)
