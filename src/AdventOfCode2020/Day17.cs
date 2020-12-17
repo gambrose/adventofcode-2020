@@ -27,9 +27,8 @@ namespace AdventOfCode2020
 
             var comparer = new CubePositionComparer();
 
-
             var changed = new HashSet<Cube>(world.Values);
-            var active = new HashSet<Cube>(world.Values, comparer);
+            var active = world.Count;
 
             for (int cycles = 0; cycles < 6; cycles++)
             {
@@ -57,35 +56,32 @@ namespace AdventOfCode2020
 
                     if (cube.Active)
                     {
-                        active.Add(cube);
+                        active++;
                     }
                     else
                     {
-                        active.Remove(cube);
+                        active--;
                     }
                 }
 
                 changed = shouldChange;
-
-                Assert.Equal(world.Values.Count(x => x.Active), active.Count);
             }
 
-            return active.Count;
+            return active;
         }
 
         private static long Part2(ReadOnlyMemory<string> input)
         {
             var world = Parse2(input).ToDictionary(x => x.Position);
 
-            var comparer = new CubePositionComparer2();
+            var comparer = new HypercubePositionComparer();
 
-
-            var changed = new HashSet<Cube2>(world.Values);
-            var active = new HashSet<Cube2>(world.Values, comparer);
+            var changed = new HashSet<Hypercube>(world.Values);
+            var active = world.Count;
 
             for (int cycles = 0; cycles < 6; cycles++)
             {
-                var shouldChange = new HashSet<Cube2>(comparer);
+                var shouldChange = new HashSet<Hypercube>(comparer);
 
                 foreach (var cube in changed)
                 {
@@ -109,20 +105,18 @@ namespace AdventOfCode2020
 
                     if (cube.Active)
                     {
-                        active.Add(cube);
+                        active++;
                     }
                     else
                     {
-                        active.Remove(cube);
+                        active--;
                     }
                 }
 
                 changed = shouldChange;
-
-                Assert.Equal(world.Values.Count(x => x.Active), active.Count);
             }
 
-            return active.Count;
+            return active;
         }
 
         public static IEnumerable<Cube> Parse(ReadOnlyMemory<string> input)
@@ -140,7 +134,7 @@ namespace AdventOfCode2020
 
                     if (c == '#')
                     {
-                        var position = new Position { X = offset + x, Y = offset + y };
+                        var position = new PositionXYZ { X = offset + x, Y = offset + y };
                         yield return new Cube(position)
                         {
                             Active = true
@@ -150,7 +144,7 @@ namespace AdventOfCode2020
             }
         }
 
-        public static IEnumerable<Cube2> Parse2(ReadOnlyMemory<string> input)
+        public static IEnumerable<Hypercube> Parse2(ReadOnlyMemory<string> input)
         {
             var size = input.Length;
             var offset = -(size / 2);
@@ -165,8 +159,8 @@ namespace AdventOfCode2020
 
                     if (c == '#')
                     {
-                        var position = new Position2 { X = offset + x, Y = offset + y };
-                        yield return new Cube2(position)
+                        var position = new PositionXYZW { X = offset + x, Y = offset + y };
+                        yield return new Hypercube(position)
                         {
                             Active = true
                         };
@@ -175,7 +169,7 @@ namespace AdventOfCode2020
             }
         }
 
-        public readonly struct Position : IEquatable<Position>
+        public readonly struct PositionXYZ : IEquatable<PositionXYZ>
         {
             public int X { get; init; }
             public int Y { get; init; }
@@ -186,7 +180,7 @@ namespace AdventOfCode2020
                 return $"{X}, {Y}, {Z}";
             }
 
-            public IEnumerable<Position> Surrounding()
+            public IEnumerable<PositionXYZ> Surrounding()
             {
                 int[] diff = { -1, 0, 1 };
 
@@ -196,7 +190,7 @@ namespace AdventOfCode2020
                     {
                         foreach (var x in diff)
                         {
-                            var position = new Position { X = X + x, Y = Y + y, Z = Z + z };
+                            var position = new PositionXYZ { X = X + x, Y = Y + y, Z = Z + z };
 
                             if (!position.Equals(this))
                             {
@@ -207,14 +201,14 @@ namespace AdventOfCode2020
                 }
             }
 
-            public bool Equals(Position other)
+            public bool Equals(PositionXYZ other)
             {
                 return X == other.X && Y == other.Y && Z == other.Z;
             }
 
             public override bool Equals(object? obj)
             {
-                return obj is Position other && Equals(other);
+                return obj is PositionXYZ other && Equals(other);
             }
 
             public override int GetHashCode()
@@ -227,17 +221,17 @@ namespace AdventOfCode2020
         {
             private Cube[]? _neighbors;
 
-            public Cube(Position position)
+            public Cube(PositionXYZ position)
             {
                 Position = position;
             }
 
-            public Position Position { get; }
+            public PositionXYZ Position { get; }
 
             public bool Active { get; set; }
 
 
-            public Cube[] GetNeighbors(Dictionary<Position, Cube> world)
+            public Cube[] GetNeighbors(Dictionary<PositionXYZ, Cube> world)
             {
                 if (_neighbors != null)
                 {
@@ -261,7 +255,7 @@ namespace AdventOfCode2020
                 return _neighbors;
             }
 
-            public bool ShouldMutate(Dictionary<Position, Cube> world)
+            public bool ShouldMutate(Dictionary<PositionXYZ, Cube> world)
             {
                 int activeNeighbors = GetNeighbors(world).Count(x => x.Active);
 
@@ -297,7 +291,7 @@ namespace AdventOfCode2020
             }
         }
 
-        public readonly struct Position2 : IEquatable<Position2>
+        public readonly struct PositionXYZW : IEquatable<PositionXYZW>
         {
             public int X { get; init; }
             public int Y { get; init; }
@@ -309,7 +303,7 @@ namespace AdventOfCode2020
                 return $"{X}, {Y}, {Z}, {W}";
             }
 
-            public IEnumerable<Position2> Surrounding()
+            public IEnumerable<PositionXYZW> Surrounding()
             {
                 int[] diff = { -1, 0, 1 };
 
@@ -321,7 +315,7 @@ namespace AdventOfCode2020
                         {
                             foreach (var x in diff)
                             {
-                                var position = new Position2 { X = X + x, Y = Y + y, Z = Z + z, W = W + w };
+                                var position = new PositionXYZW { X = X + x, Y = Y + y, Z = Z + z, W = W + w };
 
                                 if (!position.Equals(this))
                                 {
@@ -333,14 +327,14 @@ namespace AdventOfCode2020
                 }
             }
 
-            public bool Equals(Position2 other)
+            public bool Equals(PositionXYZW other)
             {
                 return X == other.X && Y == other.Y && Z == other.Z && W == other.W;
             }
 
             public override bool Equals(object? obj)
             {
-                return obj is Position2 other && Equals(other);
+                return obj is PositionXYZW other && Equals(other);
             }
 
             public override int GetHashCode()
@@ -349,21 +343,20 @@ namespace AdventOfCode2020
             }
         }
 
-        public class Cube2
+        public class Hypercube
         {
-            private Cube2[]? _neighbors;
+            private Hypercube[]? _neighbors;
 
-            public Cube2(Position2 position)
+            public Hypercube(PositionXYZW position)
             {
                 Position = position;
             }
 
-            public Position2 Position { get; }
+            public PositionXYZW Position { get; }
 
             public bool Active { get; set; }
 
-
-            public Cube2[] GetNeighbors(Dictionary<Position2, Cube2> world)
+            public Hypercube[] GetNeighbors(Dictionary<PositionXYZW, Hypercube> world)
             {
                 if (_neighbors != null)
                 {
@@ -371,14 +364,14 @@ namespace AdventOfCode2020
                 }
 
 
-                _neighbors = new Cube2[80];
+                _neighbors = new Hypercube[80];
 
                 var i = 0;
                 foreach (var position in Position.Surrounding())
                 {
                     if (!world.TryGetValue(position, out var cube))
                     {
-                        world.Add(position, cube = new Cube2(position));
+                        world.Add(position, cube = new Hypercube(position));
                     }
 
                     _neighbors[i++] = cube;
@@ -387,7 +380,7 @@ namespace AdventOfCode2020
                 return _neighbors;
             }
 
-            public bool ShouldMutate(Dictionary<Position2, Cube2> world)
+            public bool ShouldMutate(Dictionary<PositionXYZW, Hypercube> world)
             {
                 int activeNeighbors = GetNeighbors(world).Count(x => x.Active);
 
@@ -406,9 +399,9 @@ namespace AdventOfCode2020
             }
         }
 
-        public class CubePositionComparer2 : IEqualityComparer<Cube2>
+        public class HypercubePositionComparer : IEqualityComparer<Hypercube>
         {
-            public bool Equals(Cube2 x, Cube2 y)
+            public bool Equals(Hypercube x, Hypercube y)
             {
                 if (ReferenceEquals(x, y)) return true;
                 if (ReferenceEquals(x, null)) return false;
@@ -417,7 +410,7 @@ namespace AdventOfCode2020
                 return x.Position.Equals(y.Position);
             }
 
-            public int GetHashCode(Cube2 obj)
+            public int GetHashCode(Hypercube obj)
             {
                 return obj.Position.GetHashCode();
             }
