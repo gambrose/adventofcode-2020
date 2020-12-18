@@ -38,53 +38,29 @@ namespace AdventOfCode2020
 
         private static long Part1(ReadOnlyMemory<string> input)
         {
-            static long Evaluate(ReadOnlySpan<char> expression)
+            static long Reduce(Span<long> values, Span<char> operations)
             {
-                var remaining = ParseLiteral(expression, out var left).TrimStart();
-
-                long value = 0;
-
-                if (left[0] == '(' && left[^1] == ')')
+                var left = values[0];
+                for (int i = 0; i < operations.Length; i++)
                 {
-                    value = Evaluate(left[1..^1]);
-                }
-                else
-                {
-                    value = long.Parse(left);
-                }
+                    var right = values[i + 1];
 
-                while (!remaining.IsEmpty)
-                {
-                    var opp = remaining[0];
-
-                    remaining = ParseLiteral(remaining.Slice(1), out var right).TrimStart();
-
-                    long rightValue;
-                    if (right[0] == '(' && right[^1] == ')')
+                    left = operations[i] switch
                     {
-                        rightValue = Evaluate(right[1..^1]);
-                    }
-                    else
-                    {
-                        rightValue = long.Parse(right);
-                    }
-
-                    value = opp switch
-                    {
-                        '+' => value + rightValue,
-                        '*' => value * rightValue,
-                        _ => throw new NotImplementedException()
+                        '+' => left + right,
+                        '*' => left * right
                     };
                 }
 
-                return value;
+                return left;
             }
 
             long sum = 0;
 
             foreach (var line in input)
             {
-                sum += Evaluate(line);
+                ReadOnlySpan<char> expression = line.AsSpan();
+                sum += Evaluate(ref expression, Reduce);
             }
 
             return sum;
@@ -92,134 +68,117 @@ namespace AdventOfCode2020
 
         private static long Part2(ReadOnlyMemory<string> input)
         {
-            static long Evaluate(ReadOnlySpan<char> expression)
+            static long Reduce(Span<long> values, Span<char> operations)
             {
-                expression = expression.Trim();
-
-                if (expression[0] == '(')
+                for (int i = 0; i < operations.Length; i++)
                 {
-                    var count = 1;
-                    var enclosed = expression.Slice(1);
-
-                    while (count > 0)
+                    if (operations[i] == '+')
                     {
-                        count += enclosed[0] switch
-                        {
-                            '(' => 1,
-                            ')' => -1,
-                            _ => 0
-                        };
+                        var left = values[i];
+                        var right = values[i + 1];
 
-                        enclosed = enclosed.Slice(1);
-                    }
-
-                    if (enclosed.IsEmpty)
-                    {
-                        expression = expression[1..^1];
+                        values[i] = 1;
+                        values[i + 1] = left + right;
                     }
                 }
 
-                Span<char> operands = stackalloc char[expression.Length];
-                var parenthesesCount = 0;
-                for (int i = 0; i < expression.Length; i++)
-                {
-                    parenthesesCount += expression[i] switch
-                    {
-                        '(' => 1,
-                        ')' => -1,
-                        _ => 0
-                    };
+                long total = 1;
 
-                    if (parenthesesCount == 0)
-                    {
-                        operands[i] = expression[i] switch
-                        {
-                            '*' => '*',
-                            '+' => '+',
-                            _ => '_'
-                        };
-                    }
-                    else
-                    {
-                        operands[i] = '_';
-                    }
+                foreach (var value in values)
+                {
+                    total *= value;
                 }
 
-                var multiplication = operands.LastIndexOf('*');
-
-                if (multiplication >= 0)
-                {
-                    var left = expression.Slice(0, multiplication);
-                    var right = expression.Slice(multiplication + 1);
-
-                    return Evaluate(left) * Evaluate(right);
-                }
-
-                var addition = operands.LastIndexOf('+');
-
-                if (addition >= 0)
-                {
-                    var left = expression.Slice(0, addition);
-                    var right = expression.Slice(addition + 1);
-
-                    return Evaluate(left) + Evaluate(right);
-                }
-
-                return long.Parse(expression);
+                return total;
             }
 
             long sum = 0;
 
             foreach (var line in input)
             {
-                sum += Evaluate(line);
+                ReadOnlySpan<char> expression = line.AsSpan();
+                sum += Evaluate(ref expression, Reduce);
             }
 
             return sum;
         }
 
-        private static ReadOnlySpan<char> ParseLiteral(ReadOnlySpan<char> expression, out ReadOnlySpan<char> value)
+        delegate long Reducer(Span<long> values, Span<char> operations);
+
+        private static long Evaluate(ref ReadOnlySpan<char> expression, Reducer reducer)
         {
-            expression = expression.TrimStart();
+            var remaining = expression;
 
-            if (expression[0] == '(')
+            remaining = remaining.TrimStart();
+
+            Span<char> operationStack = stackalloc char[5];
+            int operations = 0;
+            Span<long> valueStack = stackalloc long[operationStack.Length + 1];
+            int values = 0;
+
+            while (remaining.Length > 0)
             {
-                var count = 1;
-                for (var i = 1; i < expression.Length; i++)
-                {
-                    var c = expression[i];
-                    count += c switch
-                    {
-                        '(' => 1,
-                        ')' => -1,
-                        _ => 0
-                    };
+                var peek = remaining[0];
 
-                    if (count == 0)
+                if (peek == '(')
+                {
+                    remaining = remaining.Slice(1);
+                    var value = Evaluate(ref remaining, reducer);
+
+                    valueStack[values++] = value;
+
+                    remaining = remaining.TrimStart();
+                }
+                else if (peek == ')')
+                {
+                    remaining = remaining.Slice(1).TrimStart();
+                    break;
+                }
+                else if (char.IsDigit(peek))
+                {
+                    // Consume number
+                    var i = 1;
+                    for (; i < remaining.Length; i++)
                     {
-                        value = expression.Slice(0, i + 1);
-                        expression = expression.Slice(value.Length);
-                        return expression;
+                        if (!char.IsDigit(remaining[i]))
+                        {
+                            break;
+                        }
                     }
+
+                    var number = remaining.Slice(0, i);
+                    var value = long.Parse(number);
+
+                    valueStack[values++] = value;
+                    remaining = remaining.Slice(i).TrimStart();
+                }
+                else if (peek == '+' || peek == '*')
+                {
+                    operationStack[operations++] = peek;
+                    remaining = remaining.Slice(1).TrimStart();
+                }
+                else
+                {
+                    throw new NotImplementedException();
                 }
             }
-            else
+
             {
-                for (var i = 0; i < expression.Length; i++)
+                long value = default;
+
+                if (values > 1)
                 {
-                    var c = expression[i];
-
-                    if (!char.IsDigit(c))
-                    {
-                        value = expression.Slice(0, i);
-                        expression = expression.Slice(value.Length);
-                        return expression;
-                    }
+                    value = reducer(valueStack.Slice(0, values), operationStack.Slice(0, operations));
                 }
-            }
 
-            value = expression;
-            return ReadOnlySpan<char>.Empty;
+                if (values == 1)
+                {
+                    value = valueStack[0];
+                }
+
+                expression = remaining;
+                return value;
+            }
         }
 
         private static ReadOnlyMemory<string> Input { get; } = File.ReadLines("Day18.input.txt").ToArray();
