@@ -120,13 +120,15 @@ namespace AdventOfCode2020
             {
                 var peek = remaining[0];
 
-                if (peek == '(')
+                if (peek == '+' || peek == '*')
+                {
+                    operationStack[operations++] = peek;
+                    remaining = remaining.Slice(1).TrimStart();
+                }
+                else if (peek == '(')
                 {
                     remaining = remaining.Slice(1);
-                    var value = Evaluate(ref remaining, reducer);
-
-                    valueStack[values++] = value;
-
+                    valueStack[values++] = Evaluate(ref remaining, reducer);
                     remaining = remaining.TrimStart();
                 }
                 else if (peek == ')')
@@ -147,15 +149,9 @@ namespace AdventOfCode2020
                     }
 
                     var number = remaining.Slice(0, i);
-                    var value = long.Parse(number);
 
-                    valueStack[values++] = value;
-                    remaining = remaining.Slice(i).TrimStart();
-                }
-                else if (peek == '+' || peek == '*')
-                {
-                    operationStack[operations++] = peek;
-                    remaining = remaining.Slice(1).TrimStart();
+                    valueStack[values++] = long.Parse(number);
+                    remaining = remaining.Slice(number.Length).TrimStart();
                 }
                 else
                 {
@@ -163,22 +159,14 @@ namespace AdventOfCode2020
                 }
             }
 
+            expression = remaining;
+
+            return values switch
             {
-                long value = default;
-
-                if (values > 1)
-                {
-                    value = reducer(valueStack.Slice(0, values), operationStack.Slice(0, operations));
-                }
-
-                if (values == 1)
-                {
-                    value = valueStack[0];
-                }
-
-                expression = remaining;
-                return value;
-            }
+                1 => valueStack[0],
+                > 1 => reducer(valueStack.Slice(0, values), operationStack.Slice(0, operations)),
+                _ => default
+            };
         }
 
         private static ReadOnlyMemory<string> Input { get; } = File.ReadLines("Day18.input.txt").ToArray();
