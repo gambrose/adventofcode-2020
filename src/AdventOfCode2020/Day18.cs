@@ -40,47 +40,44 @@ namespace AdventOfCode2020
         {
             static long Evaluate(ReadOnlySpan<char> expression)
             {
-                expression = expression.Trim();
+                var remaining = ParseLiteral(expression, out var left).TrimStart();
 
-                long? right = null;
+                long value = 0;
 
-                if (expression[^1] == ')')
+                if (left[0] == '(' && left[^1] == ')')
                 {
-                    var count = 1;
-                    int start = expression.Length - 1;
+                    value = Evaluate(left[1..^1]);
+                }
+                else
+                {
+                    value = long.Parse(left);
+                }
 
-                    while (count > 0)
+                while (!remaining.IsEmpty)
+                {
+                    var opp = remaining[0];
+
+                    remaining = ParseLiteral(remaining.Slice(1), out var right).TrimStart();
+
+                    long rightValue;
+                    if (right[0] == '(' && right[^1] == ')')
                     {
-                        start = expression.Slice(0, start).LastIndexOfAny('(', ')');
-
-                        count += expression[start] switch
-                        {
-                            '(' => -1,
-                            ')' => 1
-                        };
+                        rightValue = Evaluate(right[1..^1]);
+                    }
+                    else
+                    {
+                        rightValue = long.Parse(right);
                     }
 
-                    right = Evaluate(expression[(start + 1)..^1]);
-
-                    expression = expression[..start];
+                    value = opp switch
+                    {
+                        '+' => value + rightValue,
+                        '*' => value * rightValue,
+                        _ => throw new NotImplementedException()
+                    };
                 }
 
-                var indexOfLastOperator = expression.LastIndexOfAny('+', '*');
-
-                if (indexOfLastOperator < 0)
-                {
-                    return right ?? long.Parse(expression);
-                }
-
-                var left = Evaluate(expression.Slice(0, indexOfLastOperator));
-                right ??= long.Parse(expression.Slice(indexOfLastOperator + 1));
-
-                return expression[indexOfLastOperator] switch
-                {
-                    '+' => left + right.Value,
-                    '*' => left * right.Value,
-                    _ => throw new NotImplementedException()
-                };
+                return value;
             }
 
             long sum = 0;
@@ -110,7 +107,7 @@ namespace AdventOfCode2020
                         {
                             '(' => 1,
                             ')' => -1,
-                            _=> 0
+                            _ => 0
                         };
 
                         enclosed = enclosed.Slice(1);
@@ -180,7 +177,51 @@ namespace AdventOfCode2020
 
             return sum;
         }
-        
+
+        private static ReadOnlySpan<char> ParseLiteral(ReadOnlySpan<char> expression, out ReadOnlySpan<char> value)
+        {
+            expression = expression.TrimStart();
+
+            if (expression[0] == '(')
+            {
+                var count = 1;
+                for (var i = 1; i < expression.Length; i++)
+                {
+                    var c = expression[i];
+                    count += c switch
+                    {
+                        '(' => 1,
+                        ')' => -1,
+                        _ => 0
+                    };
+
+                    if (count == 0)
+                    {
+                        value = expression.Slice(0, i + 1);
+                        expression = expression.Slice(value.Length);
+                        return expression;
+                    }
+                }
+            }
+            else
+            {
+                for (var i = 0; i < expression.Length; i++)
+                {
+                    var c = expression[i];
+
+                    if (!char.IsDigit(c))
+                    {
+                        value = expression.Slice(0, i);
+                        expression = expression.Slice(value.Length);
+                        return expression;
+                    }
+                }
+            }
+
+            value = expression;
+            return ReadOnlySpan<char>.Empty;
+        }
+
         private static ReadOnlyMemory<string> Input { get; } = File.ReadLines("Day18.input.txt").ToArray();
     }
 }
