@@ -168,7 +168,7 @@ namespace AdventOfCode2020
 
             return (player1, player2);
         }
-        
+
         readonly struct Deck : IReadOnlyCollection<int>, IEquatable<Deck>
         {
             private readonly int[] _cards;
@@ -187,6 +187,10 @@ namespace AdventOfCode2020
                 _start = start;
                 Count = count;
             }
+
+            public ReadOnlyMemory<int> AsMemory() => _cards.AsMemory(_start, Count);
+
+            public ReadOnlySpan<int> AsSpan() => _cards.AsSpan(_start, Count);
 
             public int Count { get; }
 
@@ -210,20 +214,19 @@ namespace AdventOfCode2020
 
                 Debug.Assert(cards[start + Count - 1] == 0);
                 Debug.Assert(cards[start + Count] == 0);
-                
+
                 cards[start + Count - 1] = card1;
                 cards[start + Count] = card2;
 
                 return new(cards, start, length);
             }
 
-            public override string ToString() => string.Join(", ", this);
+            public override string ToString() => string.Join(", ", AsMemory());
 
             public override int GetHashCode()
             {
                 var hashCode = 0;
-
-                foreach (var card in this)
+                foreach (var card in AsSpan())
                 {
                     hashCode += card;
                     hashCode <<= 1;
@@ -234,13 +237,13 @@ namespace AdventOfCode2020
 
             public override bool Equals(object? obj) => obj is Deck other && Equals(other);
 
-            public bool Equals(Deck other) => this.SequenceEqual(other);
+            public bool Equals(Deck other) => AsSpan().SequenceEqual(other.AsSpan());
 
             public IEnumerator<int> GetEnumerator()
             {
-                for (int i = 0; i < Count; i++)
+                foreach (var card in AsMemory())
                 {
-                    yield return _cards[_start + i];
+                    yield return card;
                 }
             }
 
