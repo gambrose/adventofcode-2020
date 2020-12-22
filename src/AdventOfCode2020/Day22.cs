@@ -163,11 +163,10 @@ namespace AdventOfCode2020
             return (player1, player2);
         }
 
-        class Snapshot : IEquatable<Snapshot>
+        readonly struct Snapshot : IEquatable<Snapshot>
         {
             public Snapshot(Queue<int> cards)
             {
-
                 Cards = cards.ToArray();
             }
 
@@ -175,11 +174,22 @@ namespace AdventOfCode2020
 
             public override string ToString() => string.Join(", ", Cards);
 
-            public override int GetHashCode() => Cards.Length > 0 ? Cards.Aggregate(HashCode.Combine) : 0;
+            public override int GetHashCode()
+            {
+                var hashCode = 0;
 
-            public override bool Equals(object? obj) => Equals(obj as Snapshot);
+                foreach (var card in Cards)
+                {
+                    hashCode += card;
+                    hashCode <<= 1;
+                }
 
-            public bool Equals(Snapshot? other) => !ReferenceEquals(null, other) && Cards.SequenceEqual(other.Cards);
+                return hashCode;
+            }
+
+            public override bool Equals(object? obj) => obj is Snapshot other && Equals(other);
+
+            public bool Equals(Snapshot other) => Cards.SequenceEqual(other.Cards);
         }
 
         class Log
