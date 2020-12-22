@@ -1,6 +1,8 @@
 #nullable  enable
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Xunit;
@@ -27,9 +29,9 @@ namespace AdventOfCode2020
             var player1 = new Queue<int>(new[] { 43, 19 });
             var player2 = new Queue<int>(new[] { 2, 29, 14 });
 
-            var winner = RecursiveCombat(player1, player2);
+            var (winner, _) = RecursiveCombat(player1, player2);
 
-            Assert.Equal(player1, winner);
+            Assert.Equal(1, winner);
         }
 
         private static long Part1(ReadOnlyMemory<string> input)
@@ -45,65 +47,69 @@ namespace AdventOfCode2020
         {
             var (player1, player2) = Parse(input);
 
-            var winner = RecursiveCombat(new Queue<int>(player1), new Queue<int>(player2));
+            var (_, deck) = RecursiveCombat(new Queue<int>(player1), new Queue<int>(player2));
 
-            return Score(winner);
+            return Score(deck);
         }
 
-        static Queue<int> RecursiveCombat(Queue<int> player1, Queue<int> player2, Log? log = null)
+        static (int winner, Deck winningDeck) RecursiveCombat(IEnumerable<int> player1, IEnumerable<int> player2, Log? log = null)
         {
             log?.StartGame();
 
-            var previous = new HashSet<(Snapshot, Snapshot)>();
+            var previous = new HashSet<(Deck, Deck)>();
+
+            var deck1 = new Deck(player1);
+            var deck2 = new Deck(player2);
 
             while (true)
             {
-                if (player1.Count == 0)
+                if (deck1.Count == 0)
                 {
-                    log?.EndGame(2, player1, player2);
-                    return player2;
-
+                    log?.EndGame(2, deck1, deck2);
+                    return (2, deck2);
                 }
 
-                if (player2.Count == 0)
+                if (deck2.Count == 0)
                 {
-                    log?.EndGame(1, player1, player2);
-                    return player1;
+                    log?.EndGame(1, deck1, deck2);
+                    return (1, deck1);
                 }
 
-                if (!previous.Add((new Snapshot(player1), new Snapshot(player2))))
+                if (!previous.Add((deck1, deck2)))
                 {
-                    log?.EndGame(1, player1, player2);
-                    return player1;
+                    log?.EndGame(1, deck1, deck2);
+                    return (1, deck1);
                 }
 
-                log?.StartRound(player1, player2);
+                log?.StartRound(deck1, deck2);
 
-                Queue<int> winner;
-                Queue<int> looser;
+                int winner;
 
-                if (player1.Count > player1.Peek() && player2.Count > player2.Peek())
+                if (deck1.Count > deck1.Peek() && deck2.Count > deck2.Peek())
                 {
                     log?.StartSubGame();
 
-                    Queue<int> subGamePlayer1 = new(player1.Skip(1).Take(player1.Peek()));
-                    Queue<int> subGamePlayer2 = new(player2.Skip(1).Take(player2.Peek()));
-
-                    var subGameWinner = RecursiveCombat(subGamePlayer1, subGamePlayer2, log);
-
-                    (winner, looser) = ReferenceEquals(subGamePlayer1, subGameWinner) ? (player1, player2) : (player2, player1);
+                    (winner, _) = RecursiveCombat(deck1.Skip(1).Take(deck1.Peek()), deck2.Skip(1).Take(deck2.Peek()), log);
 
                     log?.EndSubGame();
                 }
                 else
                 {
-                    (winner, looser) = player1.Peek() > player2.Peek() ? (player1, player2) : (player2, player1);
+                    winner = deck1.Peek() > deck2.Peek() ? 1 : 2;
                 }
 
-                log?.EndRound(ReferenceEquals(winner, player1) ? 1 : 2);
+                log?.EndRound(winner);
 
-                winner.Enqueue(winner.Dequeue());
-                winner.Enqueue(looser.Dequeue());
+                if (winner == 1)
+                {
+                    deck1 = deck1.Win(deck1.Peek(), deck2.Peek());
+                    deck2 = deck2.Loose();
+                }
+                else
+                {
+                    deck2 = deck2.Win(deck2.Peek(), deck1.Peek());
+                    deck1 = deck1.Loose();
+                }
             }
         }
 
@@ -129,7 +135,7 @@ namespace AdventOfCode2020
             }
         }
 
-        static long Score(Queue<int> cards)
+        static long Score(IReadOnlyCollection<int> cards)
         {
             long score = 0;
             var round = cards.Count;
@@ -162,23 +168,62 @@ namespace AdventOfCode2020
 
             return (player1, player2);
         }
-
-        readonly struct Snapshot : IEquatable<Snapshot>
+        
+        readonly struct Deck : IReadOnlyCollection<int>, IEquatable<Deck>
         {
-            public Snapshot(Queue<int> cards)
+            private readonly int[] _cards;
+            private readonly int _start;
+
+            public Deck(IEnumerable<int> cards)
             {
-                Cards = cards.ToArray();
+                _cards = cards.ToArray();
+                _start = 0;
+                Count = _cards.Length;
             }
 
-            public int[] Cards { get; }
+            private Deck(int[] cards, int start, int count)
+            {
+                _cards = cards;
+                _start = start;
+                Count = count;
+            }
 
-            public override string ToString() => string.Join(", ", Cards);
+            public int Count { get; }
+
+            public int Peek() => _cards[_start];
+
+            public Deck Loose() => new(_cards, _start + 1, Count - 1);
+
+            public Deck Win(int card1, int card2)
+            {
+                var cards = _cards;
+                var start = _start + 1;
+                var length = Count + 1;
+
+                if (start + length > _cards.Length)
+                {
+                    cards = new int[length * 2];
+                    start = 0;
+
+                    _cards.AsSpan(_start + 1, Count - 1).CopyTo(cards);
+                }
+
+                Debug.Assert(cards[start + Count - 1] == 0);
+                Debug.Assert(cards[start + Count] == 0);
+                
+                cards[start + Count - 1] = card1;
+                cards[start + Count] = card2;
+
+                return new(cards, start, length);
+            }
+
+            public override string ToString() => string.Join(", ", this);
 
             public override int GetHashCode()
             {
                 var hashCode = 0;
 
-                foreach (var card in Cards)
+                foreach (var card in this)
                 {
                     hashCode += card;
                     hashCode <<= 1;
@@ -187,9 +232,22 @@ namespace AdventOfCode2020
                 return hashCode;
             }
 
-            public override bool Equals(object? obj) => obj is Snapshot other && Equals(other);
+            public override bool Equals(object? obj) => obj is Deck other && Equals(other);
 
-            public bool Equals(Snapshot other) => Cards.SequenceEqual(other.Cards);
+            public bool Equals(Deck other) => this.SequenceEqual(other);
+
+            public IEnumerator<int> GetEnumerator()
+            {
+                for (int i = 0; i < Count; i++)
+                {
+                    yield return _cards[_start + i];
+                }
+            }
+
+            IEnumerator IEnumerable.GetEnumerator()
+            {
+                return GetEnumerator();
+            }
         }
 
         class Log
@@ -229,7 +287,7 @@ namespace AdventOfCode2020
                 }
             }
 
-            public void StartRound(Queue<int> player1, Queue<int> player2)
+            public void StartRound(Deck player1, Deck player2)
             {
                 Round++;
 
