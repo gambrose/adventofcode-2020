@@ -60,20 +60,20 @@ namespace AdventOfCode2020
             {
                 if (player1.Count == 0)
                 {
-                    log?.EndGame(2);
+                    log?.EndGame(2, player1, player2);
                     return player2;
 
                 }
 
                 if (player2.Count == 0)
                 {
-                    log?.EndGame(1);
+                    log?.EndGame(1, player1, player2);
                     return player1;
                 }
 
                 if (!previous.Add((new Snapshot(player1), new Snapshot(player2))))
                 {
-                    log?.EndGame(1);
+                    log?.EndGame(1, player1, player2);
                     return player1;
                 }
 
@@ -173,6 +173,8 @@ namespace AdventOfCode2020
 
             public int[] Cards { get; }
 
+            public override string ToString() => string.Join(", ", Cards);
+
             public override int GetHashCode() => Cards.Length > 0 ? Cards.Aggregate(HashCode.Combine) : 0;
 
             public override bool Equals(object? obj) => Equals(obj as Snapshot);
@@ -204,7 +206,18 @@ namespace AdventOfCode2020
                 _writer.WriteLine($"=== Game {Game} ===");
             }
 
-            public void EndGame(int winner) => _writer.WriteLine($"The winner of game {Game} is player {winner}!");
+            public void EndGame(int winner, IEnumerable<int> player1, IEnumerable<int> player2)
+            {
+                _writer.WriteLine($"The winner of game {Game} is player {winner}!");
+
+                if (_subGame.Count == 0)
+                {
+                    _writer.WriteLine();
+                    _writer.WriteLine();
+                    _writer.WriteLine("== Post-game results ==");
+                    WriteDecks(player1, player2);
+                }
+            }
 
             public void StartRound(Queue<int> player1, Queue<int> player2)
             {
@@ -212,8 +225,7 @@ namespace AdventOfCode2020
 
                 _writer.WriteLine();
                 _writer.WriteLine($"-- Round {Round} (Game {Game}) --");
-                _writer.WriteLine($"Player 1's deck: {string.Join(", ", player1)}");
-                _writer.WriteLine($"Player 2's deck: {string.Join(", ", player2)}");
+                WriteDecks(player1, player2);
                 _writer.WriteLine($"Player 1 plays: {player1.Peek()}");
                 _writer.WriteLine($"Player 2 plays: {player2.Peek()}");
             }
@@ -237,6 +249,12 @@ namespace AdventOfCode2020
 
                 _writer.WriteLine();
                 _writer.WriteLine($"...anyway, back to game {Game}.");
+            }
+
+            private void WriteDecks(IEnumerable<int> player1, IEnumerable<int> player2)
+            {
+                _writer.WriteLine($"Player 1's deck: {string.Join(", ", player1)}");
+                _writer.WriteLine($"Player 2's deck: {string.Join(", ", player2)}");
             }
         }
 
