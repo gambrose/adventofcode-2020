@@ -83,11 +83,16 @@ namespace AdventOfCode2020
 
         class CupCircle
         {
-            private readonly int[] _offsets;
+            private readonly int[] _next;
 
             public CupCircle(int[] cups, int size = 9)
             {
-                _offsets = new int[size];
+                _next = new int[size];
+
+                for (var i = 0; i < _next.Length; i++)
+                {
+                    _next[i] = i + 2;
+                }
 
                 Start = cups[0];
 
@@ -109,13 +114,13 @@ namespace AdventOfCode2020
 
             public int Start { get; }
 
-            public int Max => _offsets.Length;
+            public int Max => _next.Length;
 
-            public int Next(int cup) => cup + _offsets[cup - 1] + 1;
+            public int Next(int cup) => _next[cup - 1];
 
             public void Link(int left, int right)
             {
-                _offsets[left - 1] = right - left - 1;
+                _next[left - 1] = right;
             }
 
             public IEnumerable<int> From(int start)
