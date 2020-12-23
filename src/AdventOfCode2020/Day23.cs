@@ -25,7 +25,7 @@ namespace AdventOfCode2020
         [Fact]
         public void Part_2() => Assert.Equal(12757828710, Part2(Input));
 
-        private static string Part1(ReadOnlyMemory<string> input, int iterations = 100)
+        private static string Part1(string input, int iterations = 100)
         {
             var cups = Parse(input);
 
@@ -36,18 +36,13 @@ namespace AdventOfCode2020
             return string.Join("", circle.From(1).Skip(1));
         }
 
-        private static long Part2(ReadOnlyMemory<string> input)
+        private static long Part2(string input)
         {
             var cups = Parse(input);
 
             var circle = new CupCircle(cups, 1000000);
 
-            var foo = circle.From(circle.Start).Take(20).ToList();
-
-            foo = circle.From(1000000 - 4).Take(20).ToList();
-
             Run(circle, 10000000);
-
 
             var star1 = circle.Next(1);
             var star2 = circle.Next(star1);
@@ -59,11 +54,11 @@ namespace AdventOfCode2020
         {
             var current = circle.Start;
 
-            var pickup = new int[3];
-
             for (int i = 0; i < iterations; i++)
             {
-                circle.CopyTo(pickup, circle.Next(current));
+                var pickup1 = circle.Next(current);
+                var pickup2 = circle.Next(pickup1);
+                var pickup3 = circle.Next(pickup2);
 
                 var destination = current;
 
@@ -76,11 +71,11 @@ namespace AdventOfCode2020
                         destination = circle.Max;
                     }
                 }
-                while (pickup.Contains(destination));
+                while (destination == pickup1 || destination == pickup2 || destination == pickup3);
 
-                circle.Link(current, circle.Next(pickup[2]));
-                circle.Link(pickup[2], circle.Next(destination));
-                circle.Link(destination, pickup[0]);
+                circle.Link(current, circle.Next(pickup3));
+                circle.Link(pickup3, circle.Next(destination));
+                circle.Link(destination, pickup1);
 
                 current = circle.Next(current);
             }
@@ -93,26 +88,22 @@ namespace AdventOfCode2020
             public CupCircle(int[] cups, int size = 9)
             {
                 _offsets = new int[size];
+
                 Start = cups[0];
 
-                var previous = Start;
                 for (var i = 1; i < cups.Length; i++)
                 {
-                    var current = cups[i];
-
-                    Link(previous, current);
-
-                    previous = current;
+                    Link(cups[i - 1], cups[i]);
                 }
 
-                if (size == 9)
+                if (size > cups.Length)
                 {
-                    Link(previous, Start);
+                    Link(size, Start);
+                    Link(cups[^1], cups.Length + 1);
                 }
                 else
                 {
-                    Link(previous, cups.Length + 1);
-                    Link(size, Start);
+                    Link(cups[^1], cups[0]);
                 }
             }
 
@@ -125,16 +116,6 @@ namespace AdventOfCode2020
             public void Link(int left, int right)
             {
                 _offsets[left - 1] = right - left - 1;
-            }
-
-            public void CopyTo(Span<int> destination, int start)
-            {
-                destination[0] = start;
-
-                for (int i = 1; i < destination.Length; i++)
-                {
-                    destination[i] = Next(destination[i - 1]);
-                }
             }
 
             public IEnumerable<int> From(int start)
@@ -150,13 +131,21 @@ namespace AdventOfCode2020
             }
         }
 
-        static int[] Parse(ReadOnlyMemory<string> input)
+        static int[] Parse(string input)
         {
-            return input.Span[0].Select(c => int.Parse(new[] { c })).ToArray();
+            var txt = input.AsSpan().Trim();
+
+            var cups = new int[txt.Length];
+            for (int i = 0; i < txt.Length; i++)
+            {
+                cups[i] = int.Parse(txt.Slice(i, 1));
+            }
+
+            return cups;
         }
 
-        private static ReadOnlyMemory<string> Example { get; } = new[] { "389125467" };
+        private static string Example { get; } = "389125467";
 
-        private static ReadOnlyMemory<string> Input { get; } = File.ReadLines("Day23.input.txt").ToArray();
+        private static string Input { get; } = File.ReadAllText("Day23.input.txt");
     }
 }
