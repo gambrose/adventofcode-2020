@@ -17,10 +17,10 @@ namespace AdventOfCode2020
         public void Part_1() => Assert.Equal(277, Part1(Input));
 
         [Fact]
-        public void Part_2_example() => Assert.Equal(default, Part2(Example));
+        public void Part_2_example() => Assert.Equal(2208, Part2(Example));
 
         [Fact]
-        public void Part_2() => Assert.Equal(default, Part2(Input));
+        public void Part_2() => Assert.Equal(3531, Part2(Input));
 
         private static long Part1(ReadOnlyMemory<string> input)
         {
@@ -43,7 +43,70 @@ namespace AdventOfCode2020
 
         private static long Part2(ReadOnlyMemory<string> input)
         {
-            return default;
+            var blackTiles = new HashSet<Hex>();
+
+            foreach (var line in input)
+            {
+                var tile = Parse(line).Aggregate(Hex.Add);
+
+                // Flip to black
+                if (blackTiles.Add(tile) is false)
+                {
+                    // Already black so flip back to white
+                    blackTiles.Remove(tile);
+                }
+            }
+
+            for (var i = 0; i < 100; ++i)
+            {
+                var next = new HashSet<Hex>();
+                next.UnionWith(blackTiles);
+
+                var whiteTiles = new HashSet<Hex>();
+
+                foreach (var blackTile in blackTiles)
+                {
+                    var countBlack = 0;
+                    foreach (var neigh in blackTile.Neighbors())
+                    {
+                        if (blackTiles.Contains(neigh))
+                        {
+                            countBlack++;
+                        }
+                        else
+                        {
+                            whiteTiles.Add(neigh);
+
+                        }
+                    }
+
+                    if (countBlack is 0 or > 2)
+                    {
+                        next.Remove(blackTile);
+                    }
+                }
+
+                foreach (var whiteTile in whiteTiles)
+                {
+                    var countBlack = 0;
+                    foreach (var neigh in whiteTile.Neighbors())
+                    {
+                        if (blackTiles.Contains(neigh))
+                        {
+                            countBlack++;
+                        }
+                    }
+
+                    if (countBlack is 2)
+                    {
+                        next.Add(whiteTile);
+                    }
+                }
+
+                blackTiles = next;
+            }
+
+            return blackTiles.Count;
         }
 
         [Theory]
@@ -117,6 +180,16 @@ namespace AdventOfCode2020
                         -1 => "w",
                         < -1 => $"w{-east}"
                     }).ToString();
+            }
+
+            public IEnumerable<Hex> Neighbors()
+            {
+                yield return this + East;
+                yield return this + SouthEast;
+                yield return this + SouthWest;
+                yield return this + West;
+                yield return this + NorthWest;
+                yield return this + NorthEast;
             }
 
             public static Hex operator +(Hex a, Hex b) => Add(a, b);
