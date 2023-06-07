@@ -276,7 +276,7 @@ namespace AdventOfCode2020
 
         public class CubePositionComparer : IEqualityComparer<Cube>
         {
-            public bool Equals(Cube x, Cube y)
+            public bool Equals(Cube? x, Cube? y)
             {
                 if (ReferenceEquals(x, y)) return true;
                 if (ReferenceEquals(x, null)) return false;
@@ -401,7 +401,7 @@ namespace AdventOfCode2020
 
         public class HypercubePositionComparer : IEqualityComparer<Hypercube>
         {
-            public bool Equals(Hypercube x, Hypercube y)
+            public bool Equals(Hypercube? x, Hypercube? y)
             {
                 if (ReferenceEquals(x, y)) return true;
                 if (ReferenceEquals(x, null)) return false;
